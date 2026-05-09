@@ -24,7 +24,7 @@ export default function DashboardPage() {
   async function handleLogout() {
     //kill session and then send them to login page
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push('/');
   }
 
   // Show nothing while we're still checking the session
