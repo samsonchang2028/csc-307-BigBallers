@@ -22,6 +22,31 @@ export default function Home(){
     const [searchInput, setSearchInput] = useState("");
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [sortAsc, setSortAsc] = useState(null);
+
+    function toggleSort() {
+        setSortAsc(prev => prev === null ? true : prev === true ? false : null);
+    }
+
+    const sortLabel = sortAsc === null ? "Sort by Price" : sortAsc ? "Price: Low → High" : "Price: High → Low";
+
+    const displayProducts = (() => {
+        if (sortAsc === null) return products;
+        return [...products]
+            .map(p => ({
+                ...p,
+                prices: [...(p.prices ?? [])].sort((a, b) =>
+                    sortAsc
+                        ? parseFloat(a.price) - parseFloat(b.price)
+                        : parseFloat(b.price) - parseFloat(a.price)
+                ),
+            }))
+            .sort((a, b) => {
+                const aMin = Math.min(...(a.prices ?? []).map(pr => parseFloat(pr.price)));
+                const bMin = Math.min(...(b.prices ?? []).map(pr => parseFloat(pr.price)));
+                return sortAsc ? aMin - bMin : bMin - aMin;
+            });
+    })();
 
     async function search(query) {
         if (!query) return;
@@ -56,11 +81,12 @@ export default function Home(){
                 <button onClick={() => { setSearchInput("milk"); search("milk"); }} className="border px-4 py-2 rounded">Dairy</button>
                 <button onClick={() => { setSearchInput("banana"); search("banana"); }} className="border px-4 py-2 rounded">Produce</button>
                 <button onClick={() => { setSearchInput("chicken"); search("chicken"); }} className="border px-4 py-2 rounded">Meat</button>
+                <button onClick={toggleSort} className="border px-4 py-2 rounded">{sortLabel}</button>
             </div>
             <div className="p-4">
                 <h1>Items:</h1>
                 {loading && <p>Loading...</p>}
-                {!loading && products.map((p, i) => (
+                {!loading && displayProducts.map((p, i) => (
                     <div key={i} className="mb-2">
                         <strong>{p.name}</strong>
                         {p.prices?.map((pr, j) => (
