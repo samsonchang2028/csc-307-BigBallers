@@ -19,10 +19,21 @@ export default function Home(){
         "1971e92b-78af-4dcc-9bfa-cf3349b649ef": "Trader Joe's",
     };
 
+    const allStoreIds = Object.keys(storeNames);
+
     const [searchInput, setSearchInput] = useState("");
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [sortAsc, setSortAsc] = useState(null);
+    const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
+
+    function toggleStore(id) {
+        setSelectedStores(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    }
 
     function toggleSort() {
         setSortAsc(prev => prev === null ? true : prev === true ? false : null);
@@ -31,19 +42,27 @@ export default function Home(){
     const sortLabel = sortAsc === null ? "Sort by Price" : sortAsc ? "Price: Low → High" : "Price: High → Low";
 
     const displayProducts = (() => {
-        if (sortAsc === null) return products;
-        return [...products]
+        let result = products
             .map(p => ({
                 ...p,
-                prices: [...(p.prices ?? [])].sort((a, b) =>
+                prices: (p.prices ?? []).filter(pr => selectedStores.has(pr.store_id)),
+            }))
+            .filter(p => p.prices.length > 0);
+
+        if (sortAsc === null) return result;
+
+        return result
+            .map(p => ({
+                ...p,
+                prices: [...p.prices].sort((a, b) =>
                     sortAsc
                         ? parseFloat(a.price) - parseFloat(b.price)
                         : parseFloat(b.price) - parseFloat(a.price)
                 ),
             }))
             .sort((a, b) => {
-                const aMin = Math.min(...(a.prices ?? []).map(pr => parseFloat(pr.price)));
-                const bMin = Math.min(...(b.prices ?? []).map(pr => parseFloat(pr.price)));
+                const aMin = Math.min(...a.prices.map(pr => parseFloat(pr.price)));
+                const bMin = Math.min(...b.prices.map(pr => parseFloat(pr.price)));
                 return sortAsc ? aMin - bMin : bMin - aMin;
             });
     })();
@@ -82,6 +101,17 @@ export default function Home(){
                 <button onClick={() => { setSearchInput("banana"); search("banana"); }} className="border px-4 py-2 rounded">Produce</button>
                 <button onClick={() => { setSearchInput("chicken"); search("chicken"); }} className="border px-4 py-2 rounded">Meat</button>
                 <button onClick={toggleSort} className="border px-4 py-2 rounded">{sortLabel}</button>
+            </div>
+            <div className="flex px-4 pb-2 gap-2 flex-wrap">
+                {allStoreIds.map(id => (
+                    <button
+                        key={id}
+                        onClick={() => toggleStore(id)}
+                        className={`border px-3 py-1 rounded text-sm ${selectedStores.has(id) ? "bg-black text-white" : "text-gray-400"}`}
+                    >
+                        {storeNames[id]}
+                    </button>
+                ))}
             </div>
             <div className="p-4">
                 <h1>Items:</h1>
