@@ -1,69 +1,34 @@
-// "use client";
-
-// import { useEffect } from "react";
-// import { useRouter } from "next/navigation";
-// import { supabase } from "@/lib/supabase";
-
-// export default function HomePage() {
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     // If already logged in → go to dashboard
-//     async function checkUser() {
-//       const { data } = await supabase.auth.getUser();
-//       if (data.user) {
-//         router.replace("/dashboard");
-//       }
-//     }
-//     checkUser();
-//   }, []);
-
-//   return (
-//     <main className="min-h-screen flex flex-col items-center justify-center gap-6">
-//       <h1 className="text-3xl font-bold">🛒 Opticart</h1>
-//       <p className="text-gray-600">
-//         Compare grocery prices and save money.
-//       </p>
-
-//       <div className="flex gap-4">
-//         <button
-//           onClick={() => router.push("/login")}
-//           className="bg-black text-white px-4 py-2 rounded">
-//           Login
-//         </button>
-
-//         <button
-//           onClick={() => router.push("/signup")}
-//           className="border px-4 py-2 rounded">
-//           Sign Up
-//         </button>
-//       </div>
-//     </main>
-//   );
-// }
-
-"use client";
-
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
 
-export default function HomePage() {
-  const router = useRouter();
+export default async function Home() {
+  const { data, error } = await supabase.from("prices").select(`
+      id,
+      price,
+      original_price,
+      scraped_at,
+      source_url,
+      products ( name ),
+      stores ( name, address )
+    `);
+
+  if (error) return <p>Error: {error.message}</p>;
+
   return (
-    <main className="min-h-screen flex flex-col justify-between">
-      <div className="flex justify-between">
-        <h1>OptiCart</h1>
-        <div>
-          <button onClick={() => router.push("/login")}>Login</button>
+    <div>
+      {data.map((item) => (
+        <div key={item.id}>
+          <h2>{item.products.name}</h2>
+          <p>
+            Store: {item.stores.name} — {item.stores.address}
+          </p>
+          <p>Price: ${item.price}</p>
+          {item.original_price ? (
+            <p>Original: ${item.original_price}</p>
+          ) : (
+            <p>No original price</p>
+          )}
         </div>
-      </div>
-      <div className="flex flex-col items-center gap-4">
-        <h1>Buy smarter</h1>
-        <p> hdajfoisdfs</p>
-        <button onClick={() => router.push("/home")}>Search now!</button>
-      </div>
-      <div>bot</div>
-    </main>
+      ))}
+    </div>
   );
 }
