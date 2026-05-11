@@ -26,6 +26,7 @@ export default function Home(){
     const [loading, setLoading] = useState(false);
     const [sortAsc, setSortAsc] = useState(null);
     const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
+    const [priceCap, setPriceCap] = useState("");
 
     function toggleStore(id) {
         setSelectedStores(prev => {
@@ -42,10 +43,14 @@ export default function Home(){
     const sortLabel = sortAsc === null ? "Sort by Price" : sortAsc ? "Price: Low → High" : "Price: High → Low";
 
     const displayProducts = (() => {
+        const cap = priceCap !== "" ? parseFloat(priceCap) : null;
         let result = products
             .map(p => ({
                 ...p,
-                prices: (p.prices ?? []).filter(pr => selectedStores.has(pr.store_id)),
+                prices: (p.prices ?? []).filter(pr =>
+                    selectedStores.has(pr.store_id) &&
+                    (cap === null || parseFloat(pr.price) <= cap)
+                ),
             }))
             .filter(p => p.prices.length > 0);
 
@@ -102,7 +107,7 @@ export default function Home(){
                 <button onClick={() => { setSearchInput("chicken"); search("chicken"); }} className="border px-4 py-2 rounded">Meat</button>
                 <button onClick={toggleSort} className="border px-4 py-2 rounded">{sortLabel}</button>
             </div>
-            <div className="flex px-4 pb-2 gap-2 flex-wrap">
+            <div className="flex px-4 pb-2 gap-2 flex-wrap items-center">
                 {allStoreIds.map(id => (
                     <button
                         key={id}
@@ -112,6 +117,17 @@ export default function Home(){
                         {storeNames[id]}
                     </button>
                 ))}
+                <label className="text-sm ml-2">Max price: $
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={priceCap}
+                        onChange={e => setPriceCap(e.target.value)}
+                        placeholder="any"
+                        className="border rounded px-2 py-1 w-20 ml-1"
+                    />
+                </label>
             </div>
             <div className="p-4">
                 <h1>Items:</h1>
