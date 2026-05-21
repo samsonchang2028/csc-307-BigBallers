@@ -1,6 +1,7 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export default async function Home() {
+  const supabase = getSupabase();
   const { data, error } = await supabase.from("prices").select(`
       id,
       price,
