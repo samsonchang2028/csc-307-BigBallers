@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import AuthButton from "@/app/components/AuthButton";
 
 export default async function Home() {
   const supabase = getSupabase();
@@ -16,6 +17,9 @@ export default async function Home() {
 
   return (
     <div>
+      <div className="absolute top-4 right-4">
+        <AuthButton />
+      </div>
       {data.map((item) => (
         <div key={item.id}>
           <h2>{item.products.name}</h2>
