@@ -49,6 +49,8 @@ export default function LoginPage() {
 
     if (error) {
       setError(error.message);
+    } else if (data.user?.identities?.length === 0) {
+      setError('This email is already registered');
     } else if (data.session) {
       router.push('/');
     } else {

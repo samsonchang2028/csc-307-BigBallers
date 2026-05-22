@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 // i wanna use this callback in the supabase callback config but i dont have permission on supabase
+// in supabase url config will be http://localhost:3000/auth/callback
 export default function AuthCallback() {
   const router = useRouter();
 
