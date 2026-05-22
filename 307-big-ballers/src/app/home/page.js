@@ -1,10 +1,9 @@
 "use client"
-import {useRouter} from "next/navigation";
 import { useState } from "react";
+import AuthButton from "@/app/components/AuthButton";
 
 export default function Home(){
 
-    const router = useRouter();
     const categoryMap = {
         Dairy: "milk",
         Produce: "banana",
@@ -98,7 +97,7 @@ export default function Home(){
                 />
                 <div className="flex gap-4">
                     <button>❤️</button>
-                    <button onClick={() => router.push("/login")}>Login</button>
+                    <AuthButton />
                 </div>
             </div>
             <div className="flex p-4 gap-4">
