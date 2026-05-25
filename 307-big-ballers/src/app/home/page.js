@@ -30,6 +30,16 @@ function parseUnitSize(name) {
   return null;
 }
 
+function scoreProduct(name, query) {
+  const n = name.toLowerCase();
+  const q = query.toLowerCase().trim();
+  if (n === q) return 4;
+  if (n.startsWith(q + " ") || n.startsWith(q + ",")) return 3;
+  const words = q.split(/\s+/);
+  if (words.every(w => new RegExp(`\\b${w}`, "i").test(name))) return 2;
+  return 1;
+}
+
 function pricePerUnit(price, unit) {
   if (!unit) return null;
   const ppu = parseFloat(price) / unit.normalized;
@@ -56,6 +66,39 @@ export default function Home(){
         "1971e92b-78af-4dcc-9bfa-cf3349b649ef": "Trader Joe's",
     };
 
+    const storeDetails = {
+        "d509a460-ad97-4099-a6df-d03798e03d6d": {
+            name: "Sprouts Farmers Market",
+            address: "1319 Johnson Ave, San Luis Obispo, CA 93401",
+            hours: "Mon–Sun: 7:00 AM – 10:00 PM",
+            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Sprouts_logo.svg/1280px-Sprouts_logo.svg.png",
+        },
+        "0c293cf1-2b65-4d9e-9cb2-4688b41460f7": {
+            name: "Smart & Final",
+            address: "3910 Broad St, San Luis Obispo, CA 93401",
+            hours: "Mon–Sun: 6:00 AM – 11:00 PM",
+            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Smart_%26_Final_logo.svg/1280px-Smart_%26_Final_logo.svg.png",
+        },
+        "eefcee75-d1f4-49c3-8a40-c59982d72287": {
+            name: "Grocery Outlet",
+            address: "269 Madonna Rd, San Luis Obispo, CA 93405",
+            hours: "Mon–Sun: 8:00 AM – 9:00 PM",
+            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Grocery_Outlet_logo.svg/1280px-Grocery_Outlet_logo.svg.png",
+        },
+        "9ae30061-19f8-41f5-8bdf-85694ddec2dc": {
+            name: "Cal Fresh Market",
+            address: "785 Foothill Blvd, San Luis Obispo, CA 93405",
+            hours: "Mon–Sat: 8:00 AM – 8:00 PM, Sun: 9:00 AM – 6:00 PM",
+            image: "https://placehold.co/400x200?text=Cal+Fresh",
+        },
+        "1971e92b-78af-4dcc-9bfa-cf3349b649ef": {
+            name: "Trader Joe's",
+            address: "1035 Madonna Rd, San Luis Obispo, CA 93405",
+            hours: "Mon–Sun: 8:00 AM – 9:00 PM",
+            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Trader_Joe%27s_logo.svg/1280px-Trader_Joe%27s_logo.svg.png",
+        },
+    };
+
     const allStoreIds = Object.keys(storeNames);
 
     const [searchInput, setSearchInput] = useState("");
@@ -64,6 +107,7 @@ export default function Home(){
     const [sortAsc, setSortAsc] = useState(null);
     const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
     const [priceCap, setPriceCap] = useState("");
+    const [selectedStore, setSelectedStore] = useState(null);
 
     function toggleStore(id) {
         setSelectedStores(prev => {
@@ -140,7 +184,10 @@ export default function Home(){
         setLoading(true);
         const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        setProducts(res.ok ? data : []);
+        const sorted = res.ok
+            ? [...data].sort((a, b) => scoreProduct(b.name, query) - scoreProduct(a.name, query))
+            : [];
+        setProducts(sorted);
         setLoading(false);
     }
 
@@ -207,7 +254,14 @@ export default function Home(){
                                     <div key={j} className="ml-4 text-sm">
                                         ${pr.price}
                                         {ppu && <span className="ml-2 text-blue-600 font-medium text-xs">{ppu}</span>}
-                                        {pr.store_id && <span className="text-gray-500"> ({storeNames[pr.store_id] ?? pr.store_id})</span>}
+                                        {pr.store_id && (
+                                            <button
+                                                onClick={() => setSelectedStore(pr.store_id)}
+                                                className="ml-1 text-gray-500 underline hover:text-blue-600"
+                                            >
+                                                ({storeNames[pr.store_id] ?? pr.store_id})
+                                            </button>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -215,6 +269,39 @@ export default function Home(){
                     );
                 })}
             </div>
+            {selectedStore && (() => {
+                const s = storeDetails[selectedStore];
+                return (
+                    <div
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                        onClick={() => setSelectedStore(null)}
+                    >
+                        <div
+                            className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="relative">
+                                <img
+                                    src={s.image}
+                                    alt={s.name}
+                                    className="w-full h-48 object-contain bg-gray-50 p-6"
+                                />
+                                <button
+                                    onClick={() => setSelectedStore(null)}
+                                    className="absolute top-2 right-2 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow text-gray-600 hover:text-black text-lg leading-none"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div className="p-5">
+                                <h2 className="text-xl font-bold mb-3">{s.name}</h2>
+                                <p className="text-sm text-gray-600 mb-2">📍 {s.address}</p>
+                                <p className="text-sm text-gray-600">🕐 {s.hours}</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </main>
     );
 }
