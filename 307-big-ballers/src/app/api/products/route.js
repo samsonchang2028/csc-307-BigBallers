@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -8,7 +8,7 @@ export async function GET(request) {
     return Response.json({ error: "Missing query parameter: q" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("products")
     .select(`
       name,
@@ -19,7 +19,7 @@ export async function GET(request) {
 
   if (error) {
     console.error("Supabase error:", JSON.stringify(error, null, 2));
-    return Response.json({ error }, { status: 500 });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
   return Response.json(data);
 }
