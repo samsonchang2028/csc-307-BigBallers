@@ -2,6 +2,43 @@
 import {useRouter} from "next/navigation";
 import { useState } from "react";
 
+const UNIT_PATTERNS = [
+  { regex: /(\d+\.?\d*)\s*(?:fl\.?\s*oz)/i,          unit: "fl oz", toFlOz: 1 },
+  { regex: /(\d+\.?\d*)\s*gal(?:lon)?s?/i,            unit: "gal",   toFlOz: 128 },
+  { regex: /(\d+\.?\d*)\s*(?:qt|quarts?)/i,           unit: "qt",    toFlOz: 32 },
+  { regex: /(\d+\.?\d*)\s*(?:pt|pints?)/i,            unit: "pt",    toFlOz: 16 },
+  { regex: /(\d+\.?\d*)\s*cups?/i,                    unit: "cup",   toFlOz: 8 },
+  { regex: /(\d+\.?\d*)\s*ml/i,                       unit: "ml",    toFlOz: 1 / 29.5735 },
+  { regex: /(\d+\.?\d*)\s*l(?:iter)?s?(?!\w)/i,       unit: "L",     toFlOz: 33.814 },
+  { regex: /(\d+\.?\d*)\s*(?:lbs?|pounds?)/i,         unit: "lb",    toOz: 16 },
+  { regex: /(\d+\.?\d*)\s*kg/i,                       unit: "kg",    toOz: 35.274 },
+  { regex: /(\d+\.?\d*)\s*g(?:rams?)?(?!\w)/i,        unit: "g",     toOz: 1 / 28.3495 },
+  { regex: /(\d+\.?\d*)\s*oz\b/i,                     unit: "oz",    toOz: 1 },
+  { regex: /(\d+)\s*(?:ct|count|pk|pack|pcs?|pieces?|each)/i, unit: "ct", toCt: 1 },
+];
+
+function parseUnitSize(name) {
+  for (const p of UNIT_PATTERNS) {
+    const m = name.match(p.regex);
+    if (m) {
+      const qty = parseFloat(m[1]);
+      if (p.toFlOz !== undefined) return { display: `${qty} ${p.unit}`, normalized: qty * p.toFlOz, normUnit: "fl oz" };
+      if (p.toOz   !== undefined) return { display: `${qty} ${p.unit}`, normalized: qty * p.toOz,   normUnit: "oz" };
+      if (p.toCt   !== undefined) return { display: `${qty} ct`,        normalized: qty,             normUnit: "ct" };
+    }
+  }
+  return null;
+}
+
+function pricePerUnit(price, unit) {
+  if (!unit) return null;
+  const ppu = parseFloat(price) / unit.normalized;
+  const formatted = ppu < 0.10
+    ? `${(ppu * 100).toFixed(1)}¢`
+    : `$${ppu.toFixed(2)}`;
+  return `${formatted}/${unit.normUnit}`;
+}
+
 export default function Home(){
 
     const router = useRouter();
@@ -37,10 +74,16 @@ export default function Home(){
     }
 
     function toggleSort() {
-        setSortAsc(prev => prev === null ? true : prev === true ? false : null);
+        setSortAsc(prev =>
+            prev === null ? true : prev === true ? false : prev === false ? "unit" : null
+        );
     }
 
-    const sortLabel = sortAsc === null ? "Sort by Price" : sortAsc ? "Price: Low → High" : "Price: High → Low";
+    const sortLabel =
+        sortAsc === null  ? "Sort by Price" :
+        sortAsc === true  ? "Price: Low → High" :
+        sortAsc === false ? "Price: High → Low" :
+                            "Unit Price: Low → High";
 
     const displayProducts = (() => {
         const cap = priceCap !== "" ? parseFloat(priceCap) : null;
@@ -55,6 +98,26 @@ export default function Home(){
             .filter(p => p.prices.length > 0);
 
         if (sortAsc === null) return result;
+
+        if (sortAsc === "unit") {
+            return result
+                .map(p => {
+                    const unit = parseUnitSize(p.name);
+                    const prices = [...p.prices].sort((a, b) => {
+                        const ppuA = unit ? parseFloat(a.price) / unit.normalized : parseFloat(a.price);
+                        const ppuB = unit ? parseFloat(b.price) / unit.normalized : parseFloat(b.price);
+                        return ppuA - ppuB;
+                    });
+                    return { ...p, prices };
+                })
+                .sort((a, b) => {
+                    const uA = parseUnitSize(a.name);
+                    const uB = parseUnitSize(b.name);
+                    const ppuA = uA ? Math.min(...a.prices.map(pr => parseFloat(pr.price) / uA.normalized)) : Infinity;
+                    const ppuB = uB ? Math.min(...b.prices.map(pr => parseFloat(pr.price) / uB.normalized)) : Infinity;
+                    return ppuA - ppuB;
+                });
+        }
 
         return result
             .map(p => ({
@@ -132,17 +195,25 @@ export default function Home(){
             <div className="p-4">
                 <h1>Items:</h1>
                 {loading && <p>Loading...</p>}
-                {!loading && displayProducts.map((p, i) => (
-                    <div key={i} className="mb-2">
-                        <strong>{p.name}</strong>
-                        {p.prices?.map((pr, j) => (
-                            <div key={j} className="ml-4 text-sm">
-                                ${pr.price}
-                                {pr.store_id && <span className="text-gray-500"> ({storeNames[pr.store_id] ?? pr.store_id})</span>}
-                            </div>
-                        ))}
-                    </div>
-                ))}
+                {!loading && displayProducts.map((p, i) => {
+                    const unit = parseUnitSize(p.name);
+                    return (
+                        <div key={i} className="mb-2">
+                            <strong>{p.name}</strong>
+                            {unit && <span className="ml-2 text-xs text-gray-400">({unit.display})</span>}
+                            {p.prices?.map((pr, j) => {
+                                const ppu = pricePerUnit(pr.price, unit);
+                                return (
+                                    <div key={j} className="ml-4 text-sm">
+                                        ${pr.price}
+                                        {ppu && <span className="ml-2 text-blue-600 font-medium text-xs">{ppu}</span>}
+                                        {pr.store_id && <span className="text-gray-500"> ({storeNames[pr.store_id] ?? pr.store_id})</span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    );
+                })}
             </div>
         </main>
     );
