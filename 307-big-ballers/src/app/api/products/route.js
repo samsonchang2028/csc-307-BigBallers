@@ -8,14 +8,19 @@ export async function GET(request) {
     return Response.json({ error: "Missing query parameter: q" }, { status: 400 });
   }
 
-  const { data, error } = await supabaseServer
+  const words = q.trim().split(/\s+/).filter(Boolean);
+  let query = supabaseServer
     .from("products")
     .select(`
       name,
       prices ( price, original_price, scraped_at, store_id )
-    `)
-    .ilike("name", `%${q}%`)
-    .limit(50);
+    `);
+
+  for (const word of words) {
+    query = query.ilike("name", `%${word}%`);
+  }
+
+  const { data, error } = await query.limit(50);
 
   if (error) {
     console.error("Supabase error:", JSON.stringify(error, null, 2));
