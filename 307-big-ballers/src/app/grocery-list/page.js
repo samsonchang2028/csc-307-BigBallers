@@ -62,7 +62,7 @@ export default function GroceryListPage() {
   return (
     <main className="min-h-screen bg-green-50 px-6 py-8">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-green-800 mb-6">My Grocery List</h1>
+        <h1 className="text-2xl font-bold text-green-800 mb-6 text-center">My Grocery List</h1>
 
         {loading && <p className="text-gray-400">Loading...</p>}
 
@@ -107,15 +107,17 @@ export default function GroceryListPage() {
               ))}
             </ul>
 
-            {dirty && (
-              <button
-                onClick={saveChanges}
-                disabled={saving}
-                className="mt-6 w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-            )}
+            <button
+              onClick={saveChanges}
+              disabled={!dirty || saving}
+              className={`mt-6 w-full py-3 rounded-xl font-medium transition-all ${
+                dirty
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-green-600 text-white opacity-20 pointer-events-none'
+              } disabled:cursor-default`}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
           </>
         )}
       </div>
