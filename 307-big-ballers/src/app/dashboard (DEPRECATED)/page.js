@@ -19,7 +19,7 @@ export default function DashboardPage() {
       }
     }
     checkUser();
-  }, []);
+  }, [router]);
 
   async function handleLogout() {
     //kill session and then send them to login page
