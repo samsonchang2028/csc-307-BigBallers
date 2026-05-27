@@ -1,8 +1,21 @@
 "use client"
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import AuthButton from "@/app/components/AuthButton";
 
 export default function Home(){
+
+    const router = useRouter();
+
+    // only major func i added connected to grocery list page - Lucas
+    async function addToList(productName) {
+        // sess if user logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push('/login'); return; }
+        // adds to db
+        await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
+    }
 
     const categoryMap = {
         Dairy: "milk",
@@ -95,7 +108,8 @@ export default function Home(){
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                 />
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
+                    <button onClick={() => router.push('/grocery-list')} className="text-sm border px-3 py-1 rounded">My List</button>
                     <button>❤️</button>
                     <AuthButton />
                 </div>
@@ -133,7 +147,14 @@ export default function Home(){
                 {loading && <p>Loading...</p>}
                 {!loading && displayProducts.map((p, i) => (
                     <div key={i} className="mb-2">
-                        <strong>{p.name}</strong>
+                        <div className="flex items-center gap-2">
+                            <strong>{p.name}</strong>
+                            <button
+                                onClick={() => addToList(p.name)}
+                                className="text-xs border px-2 py-0.5 rounded hover:bg-black hover:text-white"
+                                title="Add to grocery list"
+                            >+</button>
+                        </div>
                         {p.prices?.map((pr, j) => (
                             <div key={j} className="ml-4 text-sm">
                                 ${pr.price}
