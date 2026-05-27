@@ -10,11 +10,16 @@ export default function Home(){
 
     // only major func i added connected to grocery list page - Lucas
     async function addToList(productName) {
-        // sess if user logged in
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.push('/login'); return; }
-        // adds to db
-        await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
+        const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
+        if (error) {
+            setListFeedback(`Error: ${error.message}`);
+        } else {
+            // i was using for debugging 
+            // setListFeedback(`"${productName}" added to list`);
+        }
+        setTimeout(() => setListFeedback(null), 3000);
     }
 
     const categoryMap = {
@@ -39,6 +44,7 @@ export default function Home(){
     const [sortAsc, setSortAsc] = useState(null);
     const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
     const [priceCap, setPriceCap] = useState("");
+    const [listFeedback, setListFeedback] = useState(null);
 
     function toggleStore(id) {
         setSelectedStores(prev => {
@@ -143,6 +149,11 @@ export default function Home(){
                 </label>
             </div>
             <div className="p-4">
+                {listFeedback && (
+                    <p className={`text-sm mb-2 ${listFeedback.startsWith('Error') ? 'text-red-500' : 'text-green-600'}`}>
+                        {listFeedback}
+                    </p>
+                )}
                 <h1>Items:</h1>
                 {loading && <p>Loading...</p>}
                 {!loading && displayProducts.map((p, i) => (
