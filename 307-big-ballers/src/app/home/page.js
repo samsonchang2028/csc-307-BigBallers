@@ -15,11 +15,10 @@ export default function Home(){
         const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
         if (error) {
             setListFeedback(`Error: ${error.message}`);
+            setTimeout(() => setListFeedback(null), 3000);
         } else {
-            // i was using for debugging 
-            // setListFeedback(`"${productName}" added to list`);
+            setAddedItems(prev => new Set(prev).add(productName));
         }
-        setTimeout(() => setListFeedback(null), 3000);
     }
 
     const categoryMap = {
@@ -45,6 +44,7 @@ export default function Home(){
     const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
     const [priceCap, setPriceCap] = useState("");
     const [listFeedback, setListFeedback] = useState(null);
+    const [addedItems, setAddedItems] = useState(new Set());
 
     function toggleStore(id) {
         setSelectedStores(prev => {
@@ -162,9 +162,10 @@ export default function Home(){
                             <strong>{p.name}</strong>
                             <button
                                 onClick={() => addToList(p.name)}
-                                className="text-xs border px-2 py-0.5 rounded hover:bg-black hover:text-white"
+                                disabled={addedItems.has(p.name)}
+                                className={`text-xs border px-2 py-0.5 rounded transition-colors ${addedItems.has(p.name) ? 'bg-green-500 text-white border-green-500' : 'hover:bg-black hover:text-white'}`}
                                 title="Add to grocery list"
-                            >+</button>
+                            >{addedItems.has(p.name) ? '✓' : '+'}</button>
                         </div>
                         {p.prices?.map((pr, j) => (
                             <div key={j} className="ml-4 text-sm">
