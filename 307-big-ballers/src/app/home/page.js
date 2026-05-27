@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AuthButton from "@/app/components/AuthButton";
@@ -45,6 +45,18 @@ export default function Home(){
     const [priceCap, setPriceCap] = useState("");
     const [listFeedback, setListFeedback] = useState(null);
     const [addedItems, setAddedItems] = useState(new Set());
+
+    // On mount, fetch the user's existing grocery list so already-added
+    // items show as green checkmarks even after navigating away and back.
+    useEffect(() => {
+        async function loadExisting() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { data } = await supabase.from('grocery_list').select('product_name');
+            if (data) setAddedItems(new Set(data.map(row => row.product_name)));
+        }
+        loadExisting();
+    }, []);
 
     function toggleStore(id) {
         setSelectedStores(prev => {
