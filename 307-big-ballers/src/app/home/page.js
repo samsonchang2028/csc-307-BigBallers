@@ -1,6 +1,7 @@
-"use client"
+"use client";
 import { useState } from "react";
 import AuthButton from "@/app/components/AuthButton";
+import ItemCard from "@/app/components/ItemCard";
 
 export default function Home(){
 
@@ -26,6 +27,7 @@ export default function Home(){
     const [sortAsc, setSortAsc] = useState(null);
     const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
     const [priceCap, setPriceCap] = useState("");
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     function toggleStore(id) {
         setSelectedStores(prev => {
@@ -132,7 +134,7 @@ export default function Home(){
                 <h1>Items:</h1>
                 {loading && <p>Loading...</p>}
                 {!loading && displayProducts.map((p, i) => (
-                    <div key={i} className="mb-2">
+                    <div key={i} className="mb-2 cursor-pointer hover:bg-gray-50 rounded p-1" onClick={() => setSelectedProduct(p)}>
                         <strong>{p.name}</strong>
                         {p.prices?.map((pr, j) => (
                             <div key={j} className="ml-4 text-sm">
@@ -143,6 +145,9 @@ export default function Home(){
                     </div>
                 ))}
             </div>
+            {selectedProduct && (
+                <ItemCard product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+            )}
         </main>
     );
 }
