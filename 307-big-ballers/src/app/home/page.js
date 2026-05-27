@@ -8,7 +8,7 @@ export default function Home(){
 
     const router = useRouter();
 
-    // only major func i added connected to grocery list page - Lucas
+    // When the user clicks "Add to List" on a product, this function adds it to their grocery list in Supabase.
     async function addToList(productName) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.push('/login'); return; }
@@ -46,8 +46,7 @@ export default function Home(){
     const [listFeedback, setListFeedback] = useState(null);
     const [addedItems, setAddedItems] = useState(new Set());
 
-    // On mount, fetch the user's existing grocery list so already-added
-    // items show as green checkmarks even after navigating away and back.
+    // On loading page, fetch the user's existing grocery list so we can disable the + buttons for items they've already added
     useEffect(() => {
         async function loadExisting() {
             const { data: { user } } = await supabase.auth.getUser();
