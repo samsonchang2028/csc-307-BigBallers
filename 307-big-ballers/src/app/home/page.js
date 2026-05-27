@@ -16,6 +16,14 @@ export default function Home(){
         "eefcee75-d1f4-49c3-8a40-c59982d72287": "Grocery Outlet",
         "9ae30061-19f8-41f5-8bdf-85694ddec2dc": "Cal Fresh",
         "1971e92b-78af-4dcc-9bfa-cf3349b649ef": "Trader Joe's",
+        "kroger-ralphs": "Ralphs",
+        "kroger-food4less": "Food 4 Less",
+    };
+
+    // Map Kroger store names to their filter IDs
+    const krogerStoreIdMap = {
+        "Ralphs": "kroger-ralphs",
+        "Food 4 Less": "kroger-food4less",
     };
 
     const allStoreIds = Object.keys(storeNames);
@@ -46,10 +54,13 @@ export default function Home(){
         let result = products
             .map(p => ({
                 ...p,
-                prices: (p.prices ?? []).filter(pr =>
-                    selectedStores.has(pr.store_id) &&
-                    (cap === null || parseFloat(pr.price) <= cap)
-                ),
+                prices: (p.prices ?? []).filter(pr => {
+                    const effectiveId = pr.source === "kroger"
+                        ? krogerStoreIdMap[pr.store_name]
+                        : pr.store_id;
+                    return selectedStores.has(effectiveId) &&
+                        (cap === null || parseFloat(pr.price) <= cap);
+                }),
             }))
             .filter(p => p.prices.length > 0);
 
@@ -137,7 +148,10 @@ export default function Home(){
                         {p.prices?.map((pr, j) => (
                             <div key={j} className="ml-4 text-sm">
                                 ${pr.price}
-                                {pr.store_id && <span className="text-gray-500"> ({storeNames[pr.store_id] ?? pr.store_id})</span>}
+                                {pr.original_price && <span className="text-gray-400 line-through ml-1">${pr.original_price}</span>}
+                                {(pr.store_name || pr.store_id) && (
+                                    <span className="text-gray-500"> ({pr.store_name ?? storeNames[pr.store_id] ?? pr.store_id})</span>
+                                )}
                             </div>
                         ))}
                     </div>
