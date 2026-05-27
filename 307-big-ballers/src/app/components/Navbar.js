@@ -19,10 +19,10 @@ export default function Navbar() {
   if (HIDDEN_ON.includes(pathname)) return null;
 
   return (
-    <nav className="bg-green-600 text-white px-6 py-3 flex items-center gap-8">
-      <span className="font-bold text-lg tracking-tight">OptiCart</span>
+    <nav className="bg-green-600 text-white px-6 py-3 flex items-center">
+      <span className="font-bold text-3xl tracking-tight w-1/4">OptiCart</span>
 
-      <div className="flex gap-6 flex-1">
+      <div className="flex gap-6 justify-center flex-1">
         {links.map(link => (
           <Link
             key={link.href}
@@ -36,7 +36,9 @@ export default function Navbar() {
         ))}
       </div>
 
-      <AuthButton />
+      <div className="w-1/4 flex justify-end">
+        <AuthButton />
+      </div>
     </nav>
   );
 }
