@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import AuthButton from "@/app/components/AuthButton";
 
 export default function Home(){
 
@@ -116,20 +115,15 @@ export default function Home(){
 
     return (
         <main className="min-h-screen flex flex-col">
-            <div className="flex justify-between p-4 items-center">
-                <h1>OptiCart</h1>
+            <div className="flex p-4 items-center gap-3">
                 <input
-                    className="flex-1 mx-4 p-2 rounded border"
-                    placeholder="Search..."
+                    className="flex-1 p-2 rounded border"
+                    placeholder="Search for groceries..."
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                 />
-                <div className="flex gap-4 items-center">
-                    <button onClick={() => router.push('/grocery-list')} className="text-sm border px-3 py-1 rounded">My List</button>
-                    <button>❤️</button>
-                    <AuthButton />
-                </div>
+                <button>❤️</button>
             </div>
             <div className="flex p-4 gap-4">
                 <button onClick={() => { setSearchInput("milk"); search("milk"); }} className="border px-4 py-2 rounded">Dairy</button>
