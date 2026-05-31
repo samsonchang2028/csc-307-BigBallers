@@ -19,7 +19,7 @@ export default function Navbar() {
   if (HIDDEN_ON.includes(pathname)) return null;
 
   return (
-    <nav className="bg-green-600 text-white px-6 py-3 flex items-center">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent text-white px-6 py-3 flex items-center">
       <span className="font-bold text-3xl tracking-tight w-1/4">OptiCart</span>
 
       <div className="flex gap-6 justify-center flex-1">

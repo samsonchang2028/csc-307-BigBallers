@@ -60,9 +60,9 @@ export default function GroceryListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-green-50 px-6 py-8">
+    <main className="min-h-screen bg-green-700 px-6 py-8">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-green-800 mb-6 text-center">My Grocery List</h1>
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">My Grocery List</h1>
 
         {loading && <p className="text-gray-400">Loading...</p>}
 

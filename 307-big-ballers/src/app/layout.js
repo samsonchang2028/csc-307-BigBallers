@@ -4,9 +4,11 @@ import Navbar from "@/app/components/Navbar";
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-green-700">
         <Navbar />
-        {children}
+        <div className="pt-12">
+          {children}
+        </div>
       </body>
     </html>
   );
