@@ -1,13 +1,14 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AuthButton from "@/app/components/AuthButton";
+import ItemCard from "@/app/components/ItemCard";
 
 export default function Home(){
 
     const router = useRouter();
 
-    // When the user clicks "Add to List" on a product, this function adds it to their grocery list in Supabase.
     async function addToList(productName) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.push('/login'); return; }
@@ -20,18 +21,19 @@ export default function Home(){
         }
     }
 
-    const categoryMap = {
-        Dairy: "milk",
-        Produce: "banana",
-        Meat: "chicken"
-    };
-
     const storeNames = {
         "d509a460-ad97-4099-a6df-d03798e03d6d": "Sprouts",
         "0c293cf1-2b65-4d9e-9cb2-4688b41460f7": "Smart & Final",
         "eefcee75-d1f4-49c3-8a40-c59982d72287": "Grocery Outlet",
         "9ae30061-19f8-41f5-8bdf-85694ddec2dc": "Cal Fresh",
         "1971e92b-78af-4dcc-9bfa-cf3349b649ef": "Trader Joe's",
+        "kroger-ralphs": "Ralphs",
+        "kroger-food4less": "Food 4 Less",
+    };
+
+    const krogerStoreIdMap = {
+        "Ralphs": "kroger-ralphs",
+        "Food 4 Less": "kroger-food4less",
     };
 
     const allStoreIds = Object.keys(storeNames);
@@ -44,8 +46,8 @@ export default function Home(){
     const [priceCap, setPriceCap] = useState("");
     const [listFeedback, setListFeedback] = useState(null);
     const [addedItems, setAddedItems] = useState(new Set());
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
-    // On loading page, fetch the user's existing grocery list so we can disable the + buttons for items they've already added
     useEffect(() => {
         async function loadExisting() {
             const { data: { user } } = await supabase.auth.getUser();
@@ -75,10 +77,13 @@ export default function Home(){
         let result = products
             .map(p => ({
                 ...p,
-                prices: (p.prices ?? []).filter(pr =>
-                    selectedStores.has(pr.store_id) &&
-                    (cap === null || parseFloat(pr.price) <= cap)
-                ),
+                prices: (p.prices ?? []).filter(pr => {
+                    const effectiveId = pr.source === "kroger"
+                        ? krogerStoreIdMap[pr.store_name]
+                        : pr.store_id;
+                    return selectedStores.has(effectiveId) &&
+                        (cap === null || parseFloat(pr.price) <= cap);
+                }),
             }))
             .filter(p => p.prices.length > 0);
 
@@ -124,6 +129,7 @@ export default function Home(){
                     onKeyDown={handleKeyDown}
                 />
                 <button>❤️</button>
+                <AuthButton />
             </div>
             <div className="flex p-4 gap-4">
                 <button onClick={() => { setSearchInput("milk"); search("milk"); }} className="border px-4 py-2 rounded">Dairy</button>
@@ -162,11 +168,11 @@ export default function Home(){
                 <h1>Items:</h1>
                 {loading && <p>Loading...</p>}
                 {!loading && displayProducts.map((p, i) => (
-                    <div key={i} className="mb-2">
+                    <div key={i} className="mb-2 cursor-pointer hover:bg-gray-50 rounded p-1" onClick={() => setSelectedProduct(p)}>
                         <div className="flex items-center gap-2">
                             <strong>{p.name}</strong>
                             <button
-                                onClick={() => addToList(p.name)}
+                                onClick={(e) => { e.stopPropagation(); addToList(p.name); }}
                                 disabled={addedItems.has(p.name)}
                                 className={`text-xs border px-2 py-0.5 rounded transition-colors ${addedItems.has(p.name) ? 'bg-green-500 text-white border-green-500' : 'hover:bg-black hover:text-white'}`}
                                 title="Add to grocery list"
@@ -175,12 +181,18 @@ export default function Home(){
                         {p.prices?.map((pr, j) => (
                             <div key={j} className="ml-4 text-sm">
                                 ${pr.price}
-                                {pr.store_id && <span className="text-gray-500"> ({storeNames[pr.store_id] ?? pr.store_id})</span>}
+                                {pr.original_price && <span className="text-gray-400 line-through ml-1">${pr.original_price}</span>}
+                                {(pr.store_name || pr.store_id) && (
+                                    <span className="text-gray-500"> ({pr.store_name ?? storeNames[pr.store_id] ?? pr.store_id})</span>
+                                )}
                             </div>
                         ))}
                     </div>
                 ))}
             </div>
+            {selectedProduct && (
+                <ItemCard product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+            )}
         </main>
     );
 }
