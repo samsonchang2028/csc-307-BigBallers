@@ -168,30 +168,43 @@ export default function Home(){
                         {listFeedback}
                     </p>
                 )}
-                <h1>Items:</h1>
-                {loading && <p>Loading...</p>}
-                {!loading && displayProducts.map((p, i) => (
-                    <div key={i} className="mb-2 cursor-pointer hover:bg-gray-50 rounded p-1" onClick={() => setSelectedProduct(p)}>
-                        <div className="flex items-center gap-2">
-                            <strong>{p.name}</strong>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); addToList(p.name); }}
-                                disabled={addedItems.has(p.name)}
-                                className={`text-xs border px-2 py-0.5 rounded transition-colors ${addedItems.has(p.name) ? 'bg-green-500 text-white border-green-500' : 'hover:bg-black hover:text-white'}`}
-                                title="Add to grocery list"
-                            >{addedItems.has(p.name) ? '✓' : '+'}</button>
-                        </div>
-                        {p.prices?.map((pr, j) => (
-                            <div key={j} className="ml-4 text-sm">
-                                ${pr.price}
-                                {pr.original_price && <span className="text-gray-400 line-through ml-1">${pr.original_price}</span>}
-                                {(pr.store_name || pr.store_id) && (
-                                    <span className="text-gray-500"> ({pr.store_name ?? storeNames[pr.store_id] ?? pr.store_id})</span>
-                                )}
+                {loading && <p className="text-gray-500">Loading...</p>}
+                {!loading && displayProducts.length === 0 && products.length > 0 && (
+                    <p className="text-gray-400 text-sm">No results match your filters.</p>
+                )}
+                <div className="grid grid-cols-1 gap-3">
+                    {!loading && displayProducts.map((p, i) => {
+                        const pr = p.prices?.[0];
+                        const storeName = pr?.store_name ?? storeNames[pr?.store_id] ?? pr?.store_id ?? "";
+                        const hasDiscount = pr?.original_price && parseFloat(pr.original_price) > parseFloat(pr.price);
+                        return (
+                            <div
+                                key={i}
+                                onClick={() => setSelectedProduct(p)}
+                                className="flex items-center justify-between border rounded-xl px-4 py-3 cursor-pointer hover:shadow-sm transition-shadow bg-white"
+                            >
+                                <div className="flex-1 min-w-0 mr-4">
+                                    <p className="font-medium text-gray-900 truncate">{p.name}</p>
+                                    <p className="text-sm text-gray-400">{storeName}{p.category ? ` · ${p.category}` : ""}</p>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="text-right">
+                                        <p className="font-bold text-gray-900">${parseFloat(pr?.price).toFixed(2)}</p>
+                                        {hasDiscount && (
+                                            <p className="text-xs text-gray-400 line-through">${parseFloat(pr.original_price).toFixed(2)}</p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); addToList(p.name); }}
+                                        disabled={addedItems.has(p.name)}
+                                        className={`w-8 h-8 rounded-full border text-lg flex items-center justify-center transition-colors ${addedItems.has(p.name) ? 'bg-green-500 text-white border-green-500' : 'hover:bg-black hover:text-white'}`}
+                                        title="Add to grocery list"
+                                    >{addedItems.has(p.name) ? '✓' : '+'}</button>
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                ))}
+                        );
+                    })}
+                </div>
             </div>
             {selectedProduct && (
                 <ItemCard product={selectedProduct} onClose={() => setSelectedProduct(null)} />
