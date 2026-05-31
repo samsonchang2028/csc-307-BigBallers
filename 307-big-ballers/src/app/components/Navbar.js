@@ -6,7 +6,7 @@ import AuthButton from './AuthButton';
 
 const links = [
   { label: 'Home',         href: '/' },
-  { label: 'Search',       href: '/home' },
+  { label: 'Search',       href: '/search' },
   { label: 'Grocery List', href: '/grocery-list' },
 ];
 
