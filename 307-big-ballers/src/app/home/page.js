@@ -1,8 +1,24 @@
 "use client"
-import { useState } from "react";
-import AuthButton from "@/app/components/AuthButton";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function Home(){
+
+    const router = useRouter();
+
+    // When the user clicks "Add to List" on a product, this function adds it to their grocery list in Supabase.
+    async function addToList(productName) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push('/login'); return; }
+        const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
+        if (error) {
+            setListFeedback(`Error: ${error.message}`);
+            setTimeout(() => setListFeedback(null), 3000);
+        } else {
+            setAddedItems(prev => new Set(prev).add(productName));
+        }
+    }
 
     const categoryMap = {
         Dairy: "milk",
@@ -26,6 +42,19 @@ export default function Home(){
     const [sortAsc, setSortAsc] = useState(null);
     const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
     const [priceCap, setPriceCap] = useState("");
+    const [listFeedback, setListFeedback] = useState(null);
+    const [addedItems, setAddedItems] = useState(new Set());
+
+    // On loading page, fetch the user's existing grocery list so we can disable the + buttons for items they've already added
+    useEffect(() => {
+        async function loadExisting() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { data } = await supabase.from('grocery_list').select('product_name');
+            if (data) setAddedItems(new Set(data.map(row => row.product_name)));
+        }
+        loadExisting();
+    }, []);
 
     function toggleStore(id) {
         setSelectedStores(prev => {
@@ -86,19 +115,15 @@ export default function Home(){
 
     return (
         <main className="min-h-screen flex flex-col">
-            <div className="flex justify-between p-4 items-center">
-                <h1>OptiCart</h1>
+            <div className="flex p-4 items-center gap-3">
                 <input
-                    className="flex-1 mx-4 p-2 rounded border"
-                    placeholder="Search..."
+                    className="flex-1 p-2 rounded border"
+                    placeholder="Search for groceries..."
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                 />
-                <div className="flex gap-4">
-                    <button>❤️</button>
-                    <AuthButton />
-                </div>
+                <button>❤️</button>
             </div>
             <div className="flex p-4 gap-4">
                 <button onClick={() => { setSearchInput("milk"); search("milk"); }} className="border px-4 py-2 rounded">Dairy</button>
@@ -129,11 +154,24 @@ export default function Home(){
                 </label>
             </div>
             <div className="p-4">
+                {listFeedback && (
+                    <p className={`text-sm mb-2 ${listFeedback.startsWith('Error') ? 'text-red-500' : 'text-green-600'}`}>
+                        {listFeedback}
+                    </p>
+                )}
                 <h1>Items:</h1>
                 {loading && <p>Loading...</p>}
                 {!loading && displayProducts.map((p, i) => (
                     <div key={i} className="mb-2">
-                        <strong>{p.name}</strong>
+                        <div className="flex items-center gap-2">
+                            <strong>{p.name}</strong>
+                            <button
+                                onClick={() => addToList(p.name)}
+                                disabled={addedItems.has(p.name)}
+                                className={`text-xs border px-2 py-0.5 rounded transition-colors ${addedItems.has(p.name) ? 'bg-green-500 text-white border-green-500' : 'hover:bg-black hover:text-white'}`}
+                                title="Add to grocery list"
+                            >{addedItems.has(p.name) ? '✓' : '+'}</button>
+                        </div>
                         {p.prices?.map((pr, j) => (
                             <div key={j} className="ml-4 text-sm">
                                 ${pr.price}
