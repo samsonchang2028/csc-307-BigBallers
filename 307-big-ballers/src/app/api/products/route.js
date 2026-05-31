@@ -5,19 +5,26 @@ export async function GET(request) {
   const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
+  const category = searchParams.get("category");
 
-  if (!q) {
-    return Response.json({ error: "Missing query parameter: q" }, { status: 400 });
+  if (!q && !category) {
+    return Response.json({ error: "Missing query parameter: q or category" }, { status: 400 });
+  }
+
+  let dbQuery = supabase
+    .from("products")
+    .select(`name, category, prices ( price, original_price, scraped_at, store_id )`);
+
+  if (category) {
+    dbQuery = dbQuery.eq("category", category);
+  } else {
+    dbQuery = dbQuery.or(`name.ilike.%${q}%,category.ilike.%${q}%`);
   }
 
   // Run Supabase and Kroger fetches in parallel
   const [supabaseResult, krogerItems] = await Promise.all([
-    supabase
-      .from("products")
-      .select(`name, prices ( price, original_price, scraped_at, store_id )`)
-      .ilike("name", `%${q}%`)
-      .limit(50),
-    searchKrogerProducts(q),
+    dbQuery.limit(50),
+    searchKrogerProducts(q ?? category),
   ]);
 
   if (supabaseResult.error) {

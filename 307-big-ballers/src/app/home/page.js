@@ -105,10 +105,11 @@ export default function Home(){
             });
     })();
 
-    async function search(query) {
+    async function search(query, isCategory = false) {
         if (!query) return;
         setLoading(true);
-        const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
+        const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
+        const res = await fetch(`/api/products?${param}`);
         const data = await res.json();
         setProducts(res.ok ? data : []);
         setLoading(false);
@@ -131,10 +132,12 @@ export default function Home(){
                 <button>❤️</button>
                 <AuthButton />
             </div>
-            <div className="flex p-4 gap-4">
-                <button onClick={() => { setSearchInput("milk"); search("milk"); }} className="border px-4 py-2 rounded">Dairy</button>
-                <button onClick={() => { setSearchInput("banana"); search("banana"); }} className="border px-4 py-2 rounded">Produce</button>
-                <button onClick={() => { setSearchInput("chicken"); search("chicken"); }} className="border px-4 py-2 rounded">Meat</button>
+            <div className="flex p-4 gap-4 flex-wrap">
+                {["Dairy", "Fruit", "Vegetables", "Meat & Seafood", "Bakery", "Grains & Pasta", "Snacks", "Beverages"].map(cat => (
+                    <button key={cat} onClick={() => { setSearchInput(""); search(cat, true); }} className="border px-4 py-2 rounded">
+                        {cat}
+                    </button>
+                ))}
                 <button onClick={toggleSort} className="border px-4 py-2 rounded">{sortLabel}</button>
             </div>
             <div className="flex px-4 pb-2 gap-2 flex-wrap items-center">
