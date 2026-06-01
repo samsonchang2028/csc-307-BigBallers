@@ -13,7 +13,7 @@ export async function GET(request) {
 
   let dbQuery = supabase
     .from("products")
-    .select(`name, category, prices ( price, original_price, scraped_at, store_id )`);
+    .select(`name, unit, category, prices ( price, original_price, scraped_at, store_id )`);
 
   if (category) {
     dbQuery = dbQuery.eq("category", category);

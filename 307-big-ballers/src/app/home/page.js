@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ItemCard from "@/app/components/ItemCard";
@@ -38,7 +38,19 @@ function HomeInner() {
   const [listFeedback, setListFeedback] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [activeQuery, setActiveQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState(
+    () => searchParams.get('category') ?? searchParams.get('q') ?? ""
+  );
+
+  const search = useCallback(async (query, isCategory = false) => {
+    if (!query) return;
+    setLoading(true);
+    const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
+    const res = await fetch(`/api/products?${param}`);
+    const data = await res.json();
+    setProducts(res.ok ? data : []);
+    setLoading(false);
+  }, []);
 
   // Load grocery list + handle URL params on mount
   useEffect(() => {
@@ -53,19 +65,23 @@ function HomeInner() {
 
     const q = searchParams.get('q');
     const cat = searchParams.get('category');
-    if (cat) { setActiveQuery(cat); search(cat, true); }
-    else if (q) { setActiveQuery(q); search(q, false); }
-  }, []);
+    if (cat) {
+      search(cat, true);
+    } else if (q) {
+      search(q, false);
+    }
+  }, [searchParams, search]);
 
-  async function addToList(productName) {
+  async function addToList(p) {
+    const key = p.unit ? `${p.name} ${p.unit}` : p.name;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
-    const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
+    const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: key });
     if (error) {
       setListFeedback(`Error: ${error.message}`);
       setTimeout(() => setListFeedback(null), 3000);
     } else {
-      setAddedItems(prev => new Set(prev).add(productName));
+      setAddedItems(prev => new Set(prev).add(key));
     }
   }
 
@@ -98,16 +114,6 @@ function HomeInner() {
         return sortAsc ? aMin - bMin : bMin - aMin;
       });
   })();
-
-  async function search(query, isCategory = false) {
-    if (!query) return;
-    setLoading(true);
-    const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
-    const res = await fetch(`/api/products?${param}`);
-    const data = await res.json();
-    setProducts(res.ok ? data : []);
-    setLoading(false);
-  }
 
   function handleCategoryClick(cat) {
     setActiveQuery(cat.label);
@@ -208,7 +214,7 @@ function HomeInner() {
           {activeQuery && (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold">
-                Results for <span style={{ color: '#154734' }}>'{activeQuery}'</span>
+                Results for <span style={{ color: '#154734' }}>&apos;{activeQuery}&apos;</span>
               </h2>
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 {displayProducts.length} results found
@@ -251,7 +257,7 @@ function HomeInner() {
 
                   {/* Name + category */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
+                    <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}{p.unit ? ` — ${p.unit}` : ''}</p>
                     {p.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.category}</p>}
                   </div>
 
@@ -281,20 +287,20 @@ function HomeInner() {
                   <div className="flex items-center gap-2 shrink-0">
                     {hasDiscount && (
                       <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#F8E08E', color: '#7a5c00' }}>
-                        save ${(parseFloat(cheapest.original_price) - parseFloat(cheapest.price)).toFixed(2)}
+                        save ${`${(parseFloat(cheapest.original_price) - parseFloat(cheapest.price)).toFixed(2)}`}
                       </span>
                     )}
                     <button
-                      onClick={e => { e.stopPropagation(); addToList(p.name); }}
-                      disabled={addedItems.has(p.name)}
+                      onClick={e => { e.stopPropagation(); addToList(p); }}
+                      disabled={addedItems.has(p.unit ? `${p.name} ${p.unit}` : p.name)}
                       className="w-7 h-7 rounded-full border text-sm flex items-center justify-center transition-colors"
-                      style={addedItems.has(p.name)
+                      style={addedItems.has(p.unit ? `${p.name} ${p.unit}` : p.name)
                         ? { background: '#154734', color: '#fff', borderColor: '#154734' }
                         : { borderColor: 'var(--border)' }
                       }
                       title="Add to grocery list"
                     >
-                      {addedItems.has(p.name) ? '✓' : '+'}
+                      {addedItems.has(p.unit ? `${p.name} ${p.unit}` : p.name) ? '✓' : '+'}
                     </button>
                     <span style={{ color: 'var(--text-secondary)' }}>›</span>
                   </div>
