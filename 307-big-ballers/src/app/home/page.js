@@ -1,16 +1,16 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ItemCard from "@/app/components/ItemCard";
 
 const CATEGORIES = [
-  { label: 'Dairy',    emoji: '🥛', query: 'Dairy',          isCategory: true },
-  { label: 'Produce',  emoji: '🥬', query: 'Fruit',          isCategory: true },
-  { label: 'Meat',     emoji: '🥩', query: 'Meat & Seafood', isCategory: true },
-  { label: 'Bakery',   emoji: '🥐', query: 'Bakery',         isCategory: true },
-  { label: 'Pantry',   emoji: '🥫', query: 'Grains & Pasta', isCategory: true },
-  { label: 'Snacks',   emoji: '🍿', query: 'Snacks',         isCategory: true },
+  { label: 'Dairy & Eggs', emoji: '🥛', query: 'Dairy',          isCategory: true },
+  { label: 'Produce',      emoji: '🥬', query: 'Fruit',          isCategory: true },
+  { label: 'Meat',         emoji: '🥩', query: 'Meat & Seafood', isCategory: true },
+  { label: 'Bakery',       emoji: '🥐', query: 'Bakery',         isCategory: true },
+  { label: 'Pantry',       emoji: '🥫', query: 'Grains & Pasta', isCategory: true },
+  { label: 'Snacks',       emoji: '🍿', query: 'Snacks',         isCategory: true },
 ];
 
 const storeNames = {
@@ -38,9 +38,27 @@ function HomeInner() {
   const [listFeedback, setListFeedback] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [activeQuery, setActiveQuery] = useState("");
 
-  // Load grocery list + handle URL params on mount
+  // Derive the active query from the URL so it stays in sync as the user
+  // searches or clicks category chips. This is the source of truth.
+  const categoryParam = searchParams.get('category');
+  const qParam = searchParams.get('q');
+  const activeCategoryLabel = categoryParam
+    ? (CATEGORIES.find(c => c.query === categoryParam)?.label ?? categoryParam)
+    : null;
+  const activeQuery = activeCategoryLabel ?? qParam ?? "";
+
+  const search = useCallback(async (query, isCategory = false) => {
+    if (!query) return;
+    setLoading(true);
+    const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
+    const res = await fetch(`/api/products?${param}`);
+    const data = await res.json();
+    setProducts(res.ok ? data : []);
+    setLoading(false);
+  }, []);
+
+  // Load grocery list + run any URL-driven search whenever the query changes.
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -48,24 +66,28 @@ function HomeInner() {
         const { data } = await supabase.from('grocery_list').select('product_name');
         if (data) setAddedItems(new Set(data.map(r => r.product_name)));
       }
+
+      const q = searchParams.get('q');
+      const cat = searchParams.get('category');
+      if (cat) {
+        search(cat, true);
+      } else if (q) {
+        search(q, false);
+      }
     }
     init();
+  }, [searchParams, search]);
 
-    const q = searchParams.get('q');
-    const cat = searchParams.get('category');
-    if (cat) { setActiveQuery(cat); search(cat, true); }
-    else if (q) { setActiveQuery(q); search(q, false); }
-  }, []);
-
-  async function addToList(productName) {
+  async function addToList(p) {
+    const key = p.unit ? `${p.name} ${p.unit}` : p.name;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
-    const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: productName });
+    const { error } = await supabase.from('grocery_list').insert({ user_id: user.id, product_name: key });
     if (error) {
       setListFeedback(`Error: ${error.message}`);
       setTimeout(() => setListFeedback(null), 3000);
     } else {
-      setAddedItems(prev => new Set(prev).add(productName));
+      setAddedItems(prev => new Set(prev).add(key));
     }
   }
 
@@ -99,19 +121,14 @@ function HomeInner() {
       });
   })();
 
-  async function search(query, isCategory = false) {
-    if (!query) return;
-    setLoading(true);
-    const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
-    const res = await fetch(`/api/products?${param}`);
-    const data = await res.json();
-    setProducts(res.ok ? data : []);
-    setLoading(false);
-  }
-
   function handleCategoryClick(cat) {
-    setActiveQuery(cat.label);
-    search(cat.query, cat.isCategory);
+    // Toggle off if already active, otherwise push the new category to the URL.
+    if (categoryParam === cat.query) {
+      router.push('/home');
+      setProducts([]);
+    } else {
+      router.push(`/home?category=${encodeURIComponent(cat.query)}`);
+    }
   }
 
   return (
@@ -119,7 +136,7 @@ function HomeInner() {
       {/* Category chips */}
       <div className="px-6 py-4 flex gap-3 flex-wrap" style={{ background: '#fff', borderBottom: '1px solid var(--border)' }}>
         {CATEGORIES.map(cat => {
-          const isActive = activeQuery === cat.label;
+          const isActive = categoryParam === cat.query;
           return (
             <button
               key={cat.label}
@@ -208,7 +225,7 @@ function HomeInner() {
           {activeQuery && (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold">
-                Results for <span style={{ color: '#154734' }}>'{activeQuery}'</span>
+                Results for <span style={{ color: '#154734' }}>&apos;{activeQuery}&apos;</span>
               </h2>
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 {displayProducts.length} results found
@@ -238,6 +255,7 @@ function HomeInner() {
             {!loading && displayProducts.map((p, i) => {
               const cheapest = [...(p.prices ?? [])].sort((a, b) => parseFloat(a.price) - parseFloat(b.price))[0];
               const hasDiscount = cheapest?.original_price && parseFloat(cheapest.original_price) > parseFloat(cheapest.price);
+              const itemKey = p.unit ? `${p.name} ${p.unit}` : p.name;
               return (
                 <div
                   key={i}
@@ -251,7 +269,9 @@ function HomeInner() {
 
                   {/* Name + category */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
+                    <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                      {p.name}{p.unit ? ` — ${p.unit}` : ''}
+                    </p>
                     {p.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.category}</p>}
                   </div>
 
@@ -285,16 +305,16 @@ function HomeInner() {
                       </span>
                     )}
                     <button
-                      onClick={e => { e.stopPropagation(); addToList(p.name); }}
-                      disabled={addedItems.has(p.name)}
+                      onClick={e => { e.stopPropagation(); addToList(p); }}
+                      disabled={addedItems.has(itemKey)}
                       className="w-7 h-7 rounded-full border text-sm flex items-center justify-center transition-colors"
-                      style={addedItems.has(p.name)
+                      style={addedItems.has(itemKey)
                         ? { background: '#154734', color: '#fff', borderColor: '#154734' }
                         : { borderColor: 'var(--border)' }
                       }
                       title="Add to grocery list"
                     >
-                      {addedItems.has(p.name) ? '✓' : '+'}
+                      {addedItems.has(itemKey) ? '✓' : '+'}
                     </button>
                     <span style={{ color: 'var(--text-secondary)' }}>›</span>
                   </div>
@@ -312,7 +332,12 @@ function HomeInner() {
       </div>
 
       {selectedProduct && (
-        <ItemCard product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+        <ItemCard
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToList={addToList}
+          isAdded={addedItems.has(selectedProduct.unit ? `${selectedProduct.name} ${selectedProduct.unit}` : selectedProduct.name)}
+        />
       )}
     </main>
   );
