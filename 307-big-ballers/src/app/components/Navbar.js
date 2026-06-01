@@ -1,20 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 import AuthButton from './AuthButton';
+import { SearchIcon, HeartIcon, CloseIcon } from './icons';
 
 const HIDDEN_ON = ['/login', '/auth/callback'];
 
-export default function Navbar({ searchInput, onSearchChange, onSearch }) {
+function NavbarInner({ searchInput, onSearchChange, onSearch }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [localSearch, setLocalSearch] = useState('');
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q && pathname === '/home') setLocalSearch(q);
+  }, [searchParams, pathname]);
 
   if (HIDDEN_ON.includes(pathname)) return null;
 
-  // Support both controlled (props) and uncontrolled (local state) modes
   const isControlled = onSearchChange !== undefined;
   const value = isControlled ? searchInput : localSearch;
 
@@ -32,34 +38,80 @@ export default function Navbar({ searchInput, onSearchChange, onSearch }) {
     if (e.key === 'Enter') handleSearch();
   }
 
+  function clearSearch() {
+    if (isControlled) onSearchChange('');
+    else setLocalSearch('');
+  }
+
   return (
-    <nav style={{ background: '#fff', borderBottom: '1px solid #e5e7eb' }} className="px-6 py-3 flex items-center gap-4">
-      {/* Logo */}
-      <Link href="/home" className="flex items-center gap-2 shrink-0">
-        <span className="text-2xl">🛒</span>
-        <span className="font-bold text-xl" style={{ color: '#154734' }}>OptiCart</span>
-      </Link>
+    <header
+      className="sticky top-0 z-40 border-b backdrop-blur-sm"
+      style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--border)' }}
+    >
+      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-6">
+        <Link href="/" className="flex items-center gap-3 shrink-0 group">
+          <span className="font-bold text-[22px] tracking-tight" style={{ color: 'var(--poly-green)' }}>
+            OptiCart
+          </span>
+          <span
+            className="hidden lg:block text-xs font-medium pl-3 border-l"
+            style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+          >
+            Grocery deals for Cal Poly students
+          </span>
+        </Link>
 
-      {/* Search bar */}
-      <div className="flex flex-1 items-center border rounded-full px-4 py-2 gap-2" style={{ borderColor: '#e5e7eb', background: '#f9fafb' }}>
-        <input
-          type="text"
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Search for eggs, milk, chicken..."
-          className="flex-1 bg-transparent outline-none text-sm"
-        />
-        <button onClick={handleSearch} className="text-gray-400 hover:text-gray-600">
-          🔍
-        </button>
-      </div>
+        <div
+          className="flex flex-1 items-center rounded-full px-4 py-2.5 gap-2.5 max-w-xl mx-auto transition-shadow"
+          style={{ border: '1.5px solid var(--border)', background: '#fafafa' }}
+        >
+          <SearchIcon style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input
+            type="text"
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Search for eggs, milk, chicken..."
+            className="search-input flex-1 bg-transparent outline-none text-sm"
+            style={{ color: 'var(--text-primary)' }}
+          />
+          {value && (
+            <button
+              onClick={clearSearch}
+              className="p-0.5 rounded-full transition-colors hover:bg-gray-200"
+              style={{ color: 'var(--text-muted)' }}
+              aria-label="Clear search"
+            >
+              <CloseIcon />
+            </button>
+          )}
+        </div>
 
-      {/* Right icons */}
-      <div className="flex items-center gap-3 shrink-0">
-        <Link href="/grocery-list" title="Grocery List" className="text-gray-500 hover:text-gray-700 text-xl">🛒</Link>
-        <AuthButton />
+        <div className="flex items-center gap-4 shrink-0">
+          <Link
+            href="/grocery-list"
+            className="flex flex-col items-center gap-0.5 group transition-colors"
+            title="Favorites"
+          >
+            <HeartIcon
+              className="transition-colors group-hover:stroke-[var(--poly-green)]"
+              style={{ color: 'var(--text-secondary)' }}
+            />
+            <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Favorites
+            </span>
+          </Link>
+          <AuthButton />
+        </div>
       </div>
-    </nav>
+    </header>
+  );
+}
+
+export default function Navbar(props) {
+  return (
+    <Suspense fallback={null}>
+      <NavbarInner {...props} />
+    </Suspense>
   );
 }

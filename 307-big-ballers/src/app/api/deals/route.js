@@ -1,5 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 
+export const revalidate = 60;
+
 export async function GET() {
   const supabase = getSupabase();
 
@@ -13,11 +15,10 @@ export async function GET() {
       stores ( name )
     `)
     .not("original_price", "is", null)
-    .limit(200);
+    .limit(100);
 
   if (error) return Response.json({ error }, { status: 500 });
 
-  // Keep only rows where original_price > price, compute savings
   const withSavings = data
     .filter(row => parseFloat(row.original_price) > parseFloat(row.price))
     .map(row => ({
@@ -30,8 +31,20 @@ export async function GET() {
       store_id: row.store_id,
     }));
 
-  // Sort by savings desc, take top 6
-  withSavings.sort((a, b) => parseFloat(b.savings) - parseFloat(a.savings));
+  const byProduct = new Map();
+  for (const deal of withSavings) {
+    const id = deal.product_id ?? deal.name;
+    const existing = byProduct.get(id);
+    if (!existing || parseFloat(deal.savings) > parseFloat(existing.savings)) {
+      byProduct.set(id, deal);
+    }
+  }
 
-  return Response.json(withSavings.slice(0, 6));
+  const top = [...byProduct.values()]
+    .sort((a, b) => parseFloat(b.savings) - parseFloat(a.savings))
+    .slice(0, 9);
+
+  return Response.json(top, {
+    headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=120" },
+  });
 }
