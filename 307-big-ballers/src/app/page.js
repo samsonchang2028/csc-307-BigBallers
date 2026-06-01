@@ -92,7 +92,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-green-700 to-green-50 flex flex-col">
+    <main className="min-h-screen bg-gradient-to-b from-brand to-green-50 flex flex-col">
 
       {/* Hero */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-12 text-center">
@@ -109,11 +109,11 @@ export default function HomePage() {
         <button
           onClick={optimize}
           disabled={optimizing || (listLoaded && !!user && groceryList.length === 0)}
-          className="bg-white text-green-700 hover:bg-green-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-3xl font-black px-20 py-7 rounded-3xl shadow-2xl transition-all duration-150 tracking-tight"
+          className="bg-white text-brand hover:bg-green-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-3xl font-black px-20 py-7 rounded-3xl shadow-2xl transition-all duration-150 tracking-tight"
         >
           {optimizing ? (
             <span className="flex items-center gap-3">
-              <span className="inline-block w-6 h-6 border-[3px] border-green-600 border-t-transparent rounded-full animate-spin" />
+              <span className="inline-block w-6 h-6 border-[3px] border-brand border-t-transparent rounded-full animate-spin" />
               Optimizing...
             </span>
           ) : 'OPTIMIZE'}
@@ -159,7 +159,7 @@ export default function HomePage() {
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-1">Best store</p>
                     <p className="text-3xl font-black text-gray-900">{result.ranked[0].name}</p>
-                    <p className="text-green-600 text-sm mt-1">
+                    <p className="text-brand text-sm mt-1">
                       {result.ranked[0].itemsFound}/{result.totalItems} items &middot; ~${result.ranked[0].total.toFixed(2)} total
                     </p>
                   </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
       )}
 
       {/* Footer */}
-      <div className="flex justify-center gap-10 pb-8 text-sm text-green-700">
+      <div className="flex justify-center gap-10 pb-8 text-sm text-brand">
         <Link href="/search" className="hover:underline">Search →</Link>
         <Link href="/grocery-list" className="hover:underline">My List →</Link>
       </div>

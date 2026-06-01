@@ -119,7 +119,7 @@ export default function Home(){
     }
 
     return (
-        <main className="min-h-screen bg-green-700 flex flex-col">
+        <main className="min-h-screen bg-brand flex flex-col">
             <div className="flex p-4 items-center gap-3">
                 <input
                     className="flex-1 p-2 rounded border"

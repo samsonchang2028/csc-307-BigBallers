@@ -60,7 +60,7 @@ export default function GroceryListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-green-700 px-6 py-8">
+    <main className="min-h-screen bg-brand px-6 py-8">
       <div className="max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-white mb-6 text-center">My Grocery List</h1>
 
@@ -88,12 +88,12 @@ export default function GroceryListPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => changeQty(item.id, -1)}
-                      className="w-7 h-7 rounded-full border border-green-300 text-green-700 hover:bg-green-100 flex items-center justify-center text-sm"
+                      className="w-7 h-7 rounded-full border border-green-300 text-brand hover:bg-green-100 flex items-center justify-center text-sm"
                     >−</button>
                     <span className="w-5 text-center text-sm font-medium">{item.quantity}</span>
                     <button
                       onClick={() => changeQty(item.id, 1)}
-                      className="w-7 h-7 rounded-full border border-green-300 text-green-700 hover:bg-green-100 flex items-center justify-center text-sm"
+                      className="w-7 h-7 rounded-full border border-green-300 text-brand hover:bg-green-100 flex items-center justify-center text-sm"
                     >+</button>
                   </div>
 
@@ -112,8 +112,8 @@ export default function GroceryListPage() {
               disabled={!dirty || saving}
               className={`mt-6 w-full py-3 rounded-xl font-medium transition-all ${
                 dirty
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-green-600 text-white opacity-20 pointer-events-none'
+                  ? 'bg-brand text-white hover:bg-brand/90'
+                  : 'bg-brand text-white opacity-20 pointer-events-none'
               } disabled:cursor-default`}
             >
               {saving ? 'Saving...' : 'Save Changes'}
