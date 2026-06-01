@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import AuthButton from './AuthButton';
 
 const HIDDEN_ON = ['/login', '/auth/callback'];
@@ -10,7 +10,14 @@ const HIDDEN_ON = ['/login', '/auth/callback'];
 export default function Navbar({ searchInput, onSearchChange, onSearch }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [localSearch, setLocalSearch] = useState('');
+
+  // Seed the input from the URL ?q= param whenever it changes
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null) setLocalSearch(q);
+  }, [searchParams]);
 
   if (HIDDEN_ON.includes(pathname)) return null;
 
@@ -35,7 +42,7 @@ export default function Navbar({ searchInput, onSearchChange, onSearch }) {
   return (
     <nav style={{ background: '#fff', borderBottom: '1px solid #e5e7eb' }} className="px-6 py-3 flex items-center gap-4">
       {/* Logo */}
-      <Link href="/home" className="flex items-center gap-2 shrink-0">
+      <Link href="/" className="flex items-center gap-2 shrink-0">
         <span className="text-2xl">🛒</span>
         <span className="font-bold text-xl" style={{ color: '#154734' }}>OptiCart</span>
       </Link>

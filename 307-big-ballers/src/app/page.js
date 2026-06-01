@@ -3,20 +3,22 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ItemCard from '@/app/components/ItemCard';
+import StorePanel from '@/app/components/StorePanel';
 
 const CATEGORIES = [
-  { label: 'Dairy',    emoji: '🥛', query: 'Dairy',        isCategory: true },
-  { label: 'Produce',  emoji: '🥬', query: 'Fruit',        isCategory: true },
+  { label: 'Dairy',    emoji: '🥛', query: 'Dairy',          isCategory: true },
+  { label: 'Produce',  emoji: '🥬', query: 'Fruit',          isCategory: true },
   { label: 'Meat',     emoji: '🥩', query: 'Meat & Seafood', isCategory: true },
-  { label: 'Bakery',   emoji: '🥐', query: 'Bakery',       isCategory: true },
+  { label: 'Bakery',   emoji: '🥐', query: 'Bakery',         isCategory: true },
   { label: 'Pantry',   emoji: '🥫', query: 'Grains & Pasta', isCategory: true },
-  { label: 'Snacks',   emoji: '🍿', query: 'Snacks',       isCategory: true },
+  { label: 'Snacks',   emoji: '🍿', query: 'Snacks',         isCategory: true },
 ];
 
 export default function RootPage() {
   const router = useRouter();
   const [deals, setDeals] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [activeStore, setActiveStore] = useState(null);
 
   useEffect(() => {
     fetch('/api/deals')
@@ -69,10 +71,10 @@ export default function RootPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {deals.map((deal, i) => (
-              <button
+              <div
                 key={i}
+                className="card text-left p-4 hover:shadow-md transition-shadow flex flex-col gap-2 cursor-pointer"
                 onClick={() => setSelectedProduct({ name: deal.name, prices: [{ price: deal.price, original_price: deal.original_price, store_id: deal.store_id, store_name: deal.store_name }] })}
-                className="card text-left p-4 hover:shadow-md transition-shadow flex flex-col gap-2"
               >
                 {/* Top: image + name/price */}
                 <div className="flex items-center gap-3">
@@ -84,7 +86,14 @@ export default function RootPage() {
                     <p className="text-2xl font-bold" style={{ color: '#154734' }}>
                       ${parseFloat(deal.price).toFixed(2)}
                     </p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{deal.store_name}</p>
+                    {/* Clickable store name */}
+                    <button
+                      onClick={e => { e.stopPropagation(); setActiveStore(deal.store_name); }}
+                      className="text-xs hover:underline text-left"
+                      style={{ color: '#154734' }}
+                    >
+                      {deal.store_name}
+                    </button>
                   </div>
                 </div>
                 {/* Savings badge */}
@@ -92,7 +101,7 @@ export default function RootPage() {
                   <span>🏷</span>
                   <span>save <strong>${deal.savings}</strong> vs other stores</span>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
@@ -115,6 +124,10 @@ export default function RootPage() {
 
       {selectedProduct && (
         <ItemCard product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      )}
+
+      {activeStore && (
+        <StorePanel storeName={activeStore} onClose={() => setActiveStore(null)} />
       )}
     </main>
   );
