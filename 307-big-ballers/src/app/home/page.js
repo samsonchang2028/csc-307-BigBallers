@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -26,13 +26,31 @@ const storeNames = {
 const krogerStoreIdMap = { "Ralphs": "kroger-ralphs", "Food 4 Less": "kroger-food4less" };
 const allStoreIds = Object.keys(storeNames);
 
+// Categories sold by weight — assume 1 lb if no unit found
+const PER_LB_CATEGORIES = new Set(['Meat & Seafood', 'Fruit', 'Vegetables']);
+
+// Parse a quantity from a product name, e.g. "Eggs 12 ct" -> 12, "64 fl oz juice" -> 64
+function parseQuantity(name, category) {
+  if (!name) return null;
+  const match = name.match(/(\d+(?:\.\d+)?)\s*(?:ct|count|oz|fl\.?\s*oz|lb|lbs|g|kg|ml|l|pack|pk|piece|pc|slices?)/i);
+  if (match) return parseFloat(match[1]);
+  // Fallback: per-lb categories with no explicit unit → assume 1 lb
+  if (category && PER_LB_CATEGORIES.has(category)) return 1;
+  return null;
+}
+
+function unitPrice(price, name, category) {
+  const qty = parseQuantity(name, category);
+  return qty ? parseFloat(price) / qty : null;
+}
+
 function HomeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sortAsc, setSortAsc] = useState(null);
+  const [sortKey, setSortKey] = useState("relevance");
   const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
   const [priceCap, setPriceCap] = useState("");
   const [listFeedback, setListFeedback] = useState(null);
@@ -89,13 +107,28 @@ function HomeInner() {
       }))
       .filter(p => p.prices.length > 0);
 
-    if (sortAsc === null) return result;
+    if (sortKey === "relevance") return result;
+
+    const asc = sortKey === "price-asc" || sortKey === "unit-asc";
+    const byUnit = sortKey === "unit-asc" || sortKey === "unit-desc";
+
     return result
-      .map(p => ({ ...p, prices: [...p.prices].sort((a, b) => sortAsc ? parseFloat(a.price) - parseFloat(b.price) : parseFloat(b.price) - parseFloat(a.price)) }))
+      .map(p => ({
+        ...p,
+        prices: [...p.prices].sort((a, b) => {
+          const av = byUnit ? (unitPrice(a.price, p.name, p.category) ?? Infinity) : parseFloat(a.price);
+          const bv = byUnit ? (unitPrice(b.price, p.name, p.category) ?? Infinity) : parseFloat(b.price);
+          return asc ? av - bv : bv - av;
+        }),
+      }))
       .sort((a, b) => {
-        const aMin = Math.min(...a.prices.map(pr => parseFloat(pr.price)));
-        const bMin = Math.min(...b.prices.map(pr => parseFloat(pr.price)));
-        return sortAsc ? aMin - bMin : bMin - aMin;
+        const aVal = byUnit
+          ? (unitPrice(Math.min(...a.prices.map(pr => parseFloat(pr.price))), a.name, a.category) ?? Infinity)
+          : Math.min(...a.prices.map(pr => parseFloat(pr.price)));
+        const bVal = byUnit
+          ? (unitPrice(Math.min(...b.prices.map(pr => parseFloat(pr.price))), b.name, b.category) ?? Infinity)
+          : Math.min(...b.prices.map(pr => parseFloat(pr.price)));
+        return asc ? aVal - bVal : bVal - aVal;
       });
   })();
 
@@ -110,8 +143,13 @@ function HomeInner() {
   }
 
   function handleCategoryClick(cat) {
-    setActiveQuery(cat.label);
-    search(cat.query, cat.isCategory);
+    if (activeQuery === cat.label) {
+      setActiveQuery('');
+      setProducts([]);
+    } else {
+      setActiveQuery(cat.label);
+      search(cat.query, cat.isCategory);
+    }
   }
 
   return (
@@ -144,7 +182,7 @@ function HomeInner() {
           <div className="flex items-center justify-between mb-4">
             <span className="font-semibold text-sm">Filters</span>
             <button
-              onClick={() => { setSelectedStores(new Set(allStoreIds)); setPriceCap(""); setSortAsc(null); }}
+              onClick={() => { setSelectedStores(new Set(allStoreIds)); setPriceCap(""); setSortKey("relevance"); }}
               className="text-xs"
               style={{ color: '#154734' }}
             >
@@ -171,15 +209,17 @@ function HomeInner() {
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>Sort by</p>
           <div className="flex flex-col gap-2 mb-5">
             {[
-              { label: 'Relevance', val: null },
-              { label: 'Price: Low to High', val: true },
-              { label: 'Price: High to Low', val: false },
+              { label: 'Relevance',              val: 'relevance'  },
+              { label: 'Price: Low to High',     val: 'price-asc'  },
+              { label: 'Price: High to Low',     val: 'price-desc' },
+              { label: 'Unit Price: Low to High',  val: 'unit-asc'   },
+              { label: 'Unit Price: High to Low',  val: 'unit-desc'  },
             ].map(opt => (
-              <label key={opt.label} className="flex items-center gap-2 text-sm cursor-pointer">
+              <label key={opt.val} className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="radio"
-                  checked={sortAsc === opt.val}
-                  onChange={() => setSortAsc(opt.val)}
+                  checked={sortKey === opt.val}
+                  onChange={() => setSortKey(opt.val)}
                   style={{ accentColor: '#154734' }}
                 />
                 {opt.label}
@@ -238,6 +278,8 @@ function HomeInner() {
             {!loading && displayProducts.map((p, i) => {
               const cheapest = [...(p.prices ?? [])].sort((a, b) => parseFloat(a.price) - parseFloat(b.price))[0];
               const hasDiscount = cheapest?.original_price && parseFloat(cheapest.original_price) > parseFloat(cheapest.price);
+              const qty = parseQuantity(p.name, p.category);
+              const cheapestUnit = cheapest && qty ? parseFloat(cheapest.price) / qty : null;
               return (
                 <div
                   key={i}
@@ -252,7 +294,12 @@ function HomeInner() {
                   {/* Name + category */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{p.name}</p>
-                    {p.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.category}</p>}
+                    <div className="flex items-center gap-2">
+                      {p.category && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.category}</p>}
+                      {cheapestUnit !== null && (
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>${cheapestUnit.toFixed(2)}/unit</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Per-store prices */}
