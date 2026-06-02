@@ -11,7 +11,7 @@ export async function GET() {
       price,
       original_price,
       store_id,
-      products ( id, name, unit ),
+      products ( id, name, unit, image_url ),
       stores ( name )
     `)
     .not("original_price", "is", null)
@@ -25,6 +25,7 @@ export async function GET() {
       product_id: row.products?.id,
       name: row.products?.name,
       unit: row.products?.unit,
+      image_url: row.products?.image_url,
       price: row.price,
       original_price: row.original_price,
       savings: (parseFloat(row.original_price) - parseFloat(row.price)).toFixed(2),

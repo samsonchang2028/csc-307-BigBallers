@@ -8,10 +8,10 @@ export default function DealCard({ deal, index = 0, onClick }) {
   return (
     <button onClick={onClick} className="card card-hover text-left overflow-hidden flex flex-col">
       <div className="flex items-center gap-4 p-4 pb-3">
-        <ProductPlaceholder name={deal.name} index={index} />
+        <ProductPlaceholder name={deal.name} index={index} imageUrl={deal.image_url} />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm leading-snug mb-0.5">{deal.name}</p>
-          {deal.unit && <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>{deal.unit}</p>}
+          {deal.unit && <p className="text-xs mb-2" style={{ color: 'var(--text-muted-accessible)' }}>{deal.unit}</p>}
           <p className="text-2xl font-bold leading-none mb-1" style={{ color: 'var(--poly-green)' }}>
             ${parseFloat(deal.price).toFixed(2)}
           </p>

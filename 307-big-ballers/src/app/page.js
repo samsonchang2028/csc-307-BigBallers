@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CategoryChip from '@/app/components/CategoryChip';
 import DealCard, { DealCardSkeleton } from '@/app/components/DealCard';
-import Footer from '@/app/components/Footer';
 import { CATEGORIES } from '@/app/components/constants';
 import { saveProductForDetail } from '@/app/components/utils';
 import { TagIcon, ArrowRightIcon } from '@/app/components/icons';
@@ -32,7 +31,7 @@ export default function RootPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+    <div>
       <div className="border-b bg-white" style={{ borderColor: 'var(--border-light)' }}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex gap-2 flex-wrap">
           {CATEGORIES.map(cat => (
@@ -46,7 +45,7 @@ export default function RootPage() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-6">
+      <div className="max-w-6xl mx-auto w-full px-6 py-6">
         <div className="flex items-start justify-between mb-5">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -81,6 +80,7 @@ export default function RootPage() {
                     saveProductForDetail({
                       name: deal.name,
                       unit: deal.unit,
+                      image_url: deal.image_url,
                       prices: [{
                         price: deal.price,
                         original_price: deal.original_price,
@@ -99,9 +99,7 @@ export default function RootPage() {
             No deals found right now. Check back soon!
           </p>
         )}
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

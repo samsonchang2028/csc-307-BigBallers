@@ -29,32 +29,17 @@ export function shortStoreName(name) {
 
 const CHART_COLORS = ["#154734", "#2a9d8f", "#F2C75C", "#BD8B13", "#6b3a6e"];
 
-/** Build chart series from actual price + scraped_at only. Lines stay flat when there's no history. */
-export function buildPriceHistorySeries(prices, days = 7) {
-  const now = new Date();
-  const rangeStart = new Date(now);
-  rangeStart.setDate(rangeStart.getDate() - days);
-
-  return [...prices]
+/** Build current per-store price bars from actual price + store only. No fabricated history. */
+export function buildPriceHistorySeries(prices) {
+  return [...(prices ?? [])]
+    .filter((pr) => pr && pr.price != null && !Number.isNaN(parseFloat(pr.price)))
     .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
     .slice(0, 4)
-    .map((pr, i) => {
-      const price = parseFloat(pr.price);
-      const scrapedAt = pr.scraped_at ? new Date(pr.scraped_at) : now;
-      const store = shortStoreName(pr.store_name ?? pr.store_id ?? `Store ${i + 1}`);
-
-      const lineStart = scrapedAt < rangeStart ? rangeStart : scrapedAt;
-
-      return {
-        store,
-        color: CHART_COLORS[i % CHART_COLORS.length],
-        points: [
-          { date: lineStart, price },
-          { date: now, price },
-        ],
-        currentPrice: price,
-      };
-    });
+    .map((pr, i) => ({
+      store: shortStoreName(pr.store_name ?? pr.store_id ?? `Store ${i + 1}`),
+      color: CHART_COLORS[i % CHART_COLORS.length],
+      price: parseFloat(pr.price),
+    }));
 }
 
 export function saveProductForDetail(product) {

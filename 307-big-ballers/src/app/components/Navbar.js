@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import AuthButton from './AuthButton';
-import { SearchIcon, HeartIcon, CloseIcon } from './icons';
+import { SearchIcon, HeartIcon, CloseIcon, MenuIcon } from './icons';
 
 const HIDDEN_ON = ['/login', '/auth/callback'];
 
-function NavbarInner({ searchInput, onSearchChange, onSearch }) {
+function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,37 +48,49 @@ function NavbarInner({ searchInput, onSearchChange, onSearch }) {
       className="sticky top-0 z-40 border-b bg-white"
       style={{ borderColor: 'var(--border)' }}
     >
-      <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-6">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            aria-label="Open menu"
+            className="md:hidden shrink-0"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <MenuIcon />
+          </button>
+        )}
+
         <Link href="/" className="flex items-center gap-3 shrink-0">
           <span className="font-bold text-xl" style={{ color: 'var(--poly-green)' }}>
             OptiCart
           </span>
           <span
             className="hidden lg:block text-xs pl-3 border-l"
-            style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+            style={{ color: 'var(--text-muted-accessible)', borderColor: 'var(--border)' }}
           >
             Grocery deals for Cal Poly students
           </span>
         </Link>
 
         <div
-          className="flex flex-1 items-center rounded-full px-4 py-2 gap-2 max-w-xl mx-auto border"
+          className="flex flex-1 items-center rounded-full px-4 py-2 gap-2 max-w-xl mx-auto border min-w-0"
           style={{ borderColor: 'var(--border)', background: '#fafafa' }}
         >
-          <SearchIcon style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <SearchIcon style={{ color: 'var(--text-muted-accessible)', flexShrink: 0 }} />
           <input
             type="text"
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Search for eggs, milk, chicken..."
-            className="search-input flex-1 bg-transparent outline-none text-sm border-none"
+            aria-label="Search products"
+            className="search-input flex-1 bg-transparent outline-none text-sm border-none min-w-0"
           />
           {value && (
             <button
               onClick={clearSearch}
-              className="cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
+              className="cursor-pointer shrink-0"
+              style={{ color: 'var(--text-muted-accessible)' }}
               aria-label="Clear search"
             >
               <CloseIcon />
@@ -87,10 +99,10 @@ function NavbarInner({ searchInput, onSearchChange, onSearch }) {
         </div>
 
         <div className="flex items-center gap-4 shrink-0">
-          <Link href="/grocery-list" className="flex flex-col items-center gap-0.5" title="Favorites">
+          <Link href="/grocery-list" className="hidden sm:flex flex-col items-center gap-0.5" title="Grocery List">
             <HeartIcon style={{ color: 'var(--text-secondary)' }} />
-            <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>
-              Favorites
+            <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Grocery List
             </span>
           </Link>
           <AuthButton />

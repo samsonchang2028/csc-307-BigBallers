@@ -32,7 +32,7 @@ export default function AuthButton() {
         title="Sign out"
       >
         <UserIcon style={{ color: 'var(--poly-green)' }} />
-        <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+        <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
           Sign out
         </span>
       </button>
@@ -49,7 +49,7 @@ export default function AuthButton() {
         className="transition-colors group-hover:stroke-[var(--poly-green)]"
         style={{ color: 'var(--text-secondary)' }}
       />
-      <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+      <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
         Log in
       </span>
     </button>

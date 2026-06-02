@@ -24,7 +24,7 @@ import {
 
 function SpecCard({ icon: Icon, label, value }) {
   return (
-    <div className="card flex-1 p-4 flex items-center gap-3">
+    <div className="card flex-1 min-w-[160px] p-4 flex items-center gap-3">
       <div
         className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
         style={{ background: "var(--savings-green)", color: "var(--poly-green)" }}
@@ -32,7 +32,7 @@ function SpecCard({ icon: Icon, label, value }) {
         <Icon style={{ width: 16, height: 16 }} />
       </div>
       <div>
-        <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+        <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted-accessible)" }}>
           {label}
         </p>
         <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -125,7 +125,7 @@ function ProductDetailInner() {
         {/* Left column */}
         <div className="space-y-5">
           <div className="flex gap-6 items-start">
-            <ProductPlaceholder name={product.name} index={0} size="lg" />
+            <ProductPlaceholder name={product.name} index={0} size="lg" imageUrl={product.image_url} />
             <div className="flex-1">
               <h1 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
                 {product.name}
@@ -154,7 +154,7 @@ function ProductDetailInner() {
                 }}
               >
                 <HeartIcon style={{ width: 16, height: 16 }} />
-                {favorited ? "In favorites" : "Add to favorites"}
+                {favorited ? "In list" : "Add to list"}
               </button>
             </div>
           </div>
@@ -173,7 +173,7 @@ function ProductDetailInner() {
                     <th
                       key={h}
                       className={`px-5 py-2.5 font-medium text-xs uppercase tracking-wide ${h === "Store" ? "text-left" : "text-right"}`}
-                      style={{ color: "var(--text-muted)" }}
+                      style={{ color: "var(--text-muted-accessible)" }}
                     >
                       {h}
                     </th>
@@ -208,7 +208,7 @@ function ProductDetailInner() {
                       >
                         ${parseFloat(pr.price).toFixed(2)}
                       </td>
-                      <td className="px-5 py-3.5 text-right line-through" style={{ color: "var(--text-muted)" }}>
+                      <td className="px-5 py-3.5 text-right line-through" style={{ color: "var(--text-muted-accessible)" }}>
                         {pr.original_price ? `$${parseFloat(pr.original_price).toFixed(2)}` : "—"}
                       </td>
                       <td className="px-5 py-3.5 text-right text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -221,7 +221,7 @@ function ProductDetailInner() {
             </table>
             <div
               className="flex items-center gap-2 px-5 py-3 border-t text-xs"
-              style={{ borderColor: "var(--border-light)", color: "var(--text-muted)" }}
+              style={{ borderColor: "var(--border-light)", color: "var(--text-muted-accessible)" }}
             >
               <InfoIcon style={{ width: 14, height: 14 }} />
               Prices and availability may vary by location
@@ -259,7 +259,7 @@ function ProductDetailInner() {
       </div>
 
       {/* Spec bar */}
-      <div className="flex gap-3 mt-6">
+      <div className="flex flex-wrap gap-3 mt-6">
         <SpecCard icon={TagIcon} label="Brand" value={brand} />
         <SpecCard icon={TagIcon} label="Category" value={product.category ?? "Grocery"} />
         <SpecCard icon={InfoIcon} label="Size" value={product.unit ?? "—"} />
@@ -270,7 +270,7 @@ function ProductDetailInner() {
 
 export default function ProductPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm" style={{ color: "var(--text-muted)" }}>Loading...</div>}>
+    <Suspense fallback={<div className="p-6 text-sm" style={{ color: "var(--text-muted-accessible)" }}>Loading...</div>}>
       <ProductDetailInner />
     </Suspense>
   );

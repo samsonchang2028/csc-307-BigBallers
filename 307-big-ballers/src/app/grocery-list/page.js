@@ -60,17 +60,19 @@ export default function GroceryListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-green-50 px-6 py-8">
+    <div className="px-6 py-8">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-green-800 mb-6 text-center">My Grocery List</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center" style={{ color: 'var(--poly-green)' }}>
+          My Grocery List
+        </h1>
 
-        {loading && <p className="text-gray-400">Loading...</p>}
+        {loading && <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>}
 
         {!loading && items.length === 0 && !dirty && (
-          <div className="bg-white rounded-xl border border-green-100 p-8 text-center text-gray-400">
+          <div className="card p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
             <p className="text-4xl mb-3">🥦</p>
             <p>Your list is empty.</p>
-            <p className="text-sm mt-1">Search for items and hit + to add them.</p>
+            <p className="text-sm mt-1">Search for items and add them to your list.</p>
           </div>
         )}
 
@@ -80,26 +82,34 @@ export default function GroceryListPage() {
               {items.map(item => (
                 <li
                   key={item.id}
-                  className="flex items-center gap-4 bg-white border border-green-100 rounded-xl px-5 py-4 shadow-sm"
+                  className="card flex items-center gap-4 px-5 py-4"
                 >
-                  <span className="flex-1 font-medium text-gray-800">{item.product_name}</span>
+                  <span className="flex-1 font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {item.product_name}
+                  </span>
 
                   {/* Quantity controls */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => changeQty(item.id, -1)}
-                      className="w-7 h-7 rounded-full border border-green-300 text-green-700 hover:bg-green-100 flex items-center justify-center text-sm"
+                      aria-label={`Decrease quantity of ${item.product_name}`}
+                      className="w-7 h-7 flex items-center justify-center text-sm border transition-colors"
+                      style={{ borderColor: 'var(--poly-green)', color: 'var(--poly-green)', borderRadius: 'var(--radius-pill)' }}
                     >−</button>
-                    <span className="w-5 text-center text-sm font-medium">{item.quantity}</span>
+                    <span className="w-5 text-center text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {item.quantity}
+                    </span>
                     <button
                       onClick={() => changeQty(item.id, 1)}
-                      className="w-7 h-7 rounded-full border border-green-300 text-green-700 hover:bg-green-100 flex items-center justify-center text-sm"
+                      aria-label={`Increase quantity of ${item.product_name}`}
+                      className="w-7 h-7 flex items-center justify-center text-sm border transition-colors"
+                      style={{ borderColor: 'var(--poly-green)', color: 'var(--poly-green)', borderRadius: 'var(--radius-pill)' }}
                     >+</button>
                   </div>
 
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-red-400 hover:text-red-600 text-sm transition-colors"
+                    className="text-sm text-red-500 hover:text-red-600 transition-colors"
                   >
                     Remove
                   </button>
@@ -110,17 +120,14 @@ export default function GroceryListPage() {
             <button
               onClick={saveChanges}
               disabled={!dirty || saving}
-              className={`mt-6 w-full py-3 rounded-xl font-medium transition-all ${
-                dirty
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-green-600 text-white opacity-20 pointer-events-none'
-              } disabled:cursor-default`}
+              className="mt-6 w-full py-3 font-medium text-white transition-opacity disabled:opacity-30 disabled:pointer-events-none"
+              style={{ background: 'var(--poly-green)', borderRadius: 'var(--radius)' }}
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

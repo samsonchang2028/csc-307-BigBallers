@@ -2,28 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, SearchIcon, HeartIcon, TagIcon, InfoIcon, GradCapIcon } from "./icons";
+import { HomeIcon, SearchIcon, HeartIcon, InfoIcon, GradCapIcon, CloseIcon } from "./icons";
+import CalPolyBadge from "./CalPolyBadge";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/home", label: "Search", icon: SearchIcon },
-  { href: "/grocery-list", label: "Favorites", icon: HeartIcon },
-  { href: "/home?category=Dairy", label: "Deals", icon: TagIcon },
+  { href: "/grocery-list", label: "Grocery List", icon: HeartIcon },
   { href: "/#about", label: "About", icon: InfoIcon },
 ];
 
-function CalPolyBadge() {
-  return (
-    <svg width="36" height="36" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect width="48" height="48" rx="4" fill="#154734" />
-      <text x="24" y="31" textAnchor="middle" fill="#F8E08E" fontSize="18" fontWeight="700" fontFamily="system-ui, sans-serif">
-        CP
-      </text>
-    </svg>
-  );
-}
-
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose = () => {} }) {
   const pathname = usePathname();
 
   function isActive(href) {
@@ -32,11 +21,17 @@ export default function Sidebar() {
     return pathname === href.split("?")[0];
   }
 
-  return (
+  const panel = (
     <aside
-      className="w-52 shrink-0 flex flex-col border-r p-4"
-      style={{ background: "#fff", borderColor: "var(--border-light)", minHeight: "calc(100vh - 73px)" }}
+      className="w-52 shrink-0 flex flex-col border-r p-4 h-full"
+      style={{ background: "#fff", borderColor: "var(--border-light)" }}
     >
+      <div className="flex items-center justify-end md:hidden mb-2">
+        <button onClick={onClose} aria-label="Close menu" style={{ color: "var(--text-secondary)" }}>
+          <CloseIcon />
+        </button>
+      </div>
+
       <nav className="flex flex-col gap-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
@@ -44,7 +39,8 @@ export default function Sidebar() {
             <Link
               key={label}
               href={href}
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium cursor-pointer"
+              onClick={onClose}
+              className="flex items-center gap-3 px-3 py-2 text-sm font-medium cursor-pointer rounded"
               style={
                 active
                   ? { background: "var(--savings-green)", color: "var(--poly-green)" }
@@ -70,7 +66,7 @@ export default function Sidebar() {
             <p className="text-xs font-semibold leading-snug" style={{ color: "var(--poly-green)" }}>
               Built for Cal Poly
             </p>
-            <p className="text-[11px] leading-relaxed mt-1" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-xs leading-relaxed mt-1" style={{ color: "var(--text-secondary)" }}>
               Save more. Stress less. We compare prices at local stores so you don&apos;t have to.
             </p>
           </div>
@@ -78,5 +74,25 @@ export default function Sidebar() {
         <CalPolyBadge />
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Static sidebar on md+ */}
+      <div className="hidden md:flex">{panel}</div>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0"
+            style={{ background: "rgba(0,0,0,0.5)" }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          <div className="absolute left-0 top-0 h-full">{panel}</div>
+        </div>
+      )}
+    </>
   );
 }

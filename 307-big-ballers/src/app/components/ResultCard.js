@@ -7,7 +7,7 @@ import { getStoreName } from "./constants";
 import { formatRelativeTime, saveProductForDetail, shortStoreName } from "./utils";
 import { LeafIcon, TagIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from "./icons";
 
-export default function ResultCard({ product, index, onAddToList, isFavorited }) {
+export default function ResultCard({ product, index, onToggleList, isFavorited }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(index === 0);
 
@@ -31,41 +31,44 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
   }
 
   return (
-    <div className="card overflow-hidden cursor-pointer">
+    <div className="card overflow-hidden">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-4 p-4 text-left cursor-pointer hover:bg-gray-50"
+        aria-expanded={expanded}
+        className="w-full flex flex-col sm:flex-row sm:items-center gap-4 p-4 text-left cursor-pointer hover:bg-gray-50"
       >
-        <ProductPlaceholder name={product.name} index={index} size="md" />
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <ProductPlaceholder name={product.name} index={index} size="md" imageUrl={product.image_url} />
 
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[15px] mb-0.5" style={{ color: "var(--text-primary)" }}>
-            {product.name}
-          </p>
-          {product.unit && (
-            <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
-              {product.unit}
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-[15px] mb-0.5" style={{ color: "var(--text-primary)" }}>
+              {product.name}
             </p>
-          )}
-          {cheapestStore && (
-            <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--savings-green-text)" }}>
-              <LeafIcon />
-              <span>Cheapest at {shortStoreName(cheapestStore)}</span>
-            </div>
-          )}
+            {product.unit && (
+              <p className="text-xs mb-1.5" style={{ color: "var(--text-muted-accessible)" }}>
+                {product.unit}
+              </p>
+            )}
+            {cheapestStore && (
+              <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--savings-green-text)" }}>
+                <LeafIcon />
+                <span>Cheapest at {shortStoreName(cheapestStore)}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           {displayStores.map((pr, j) => {
             const store = shortStoreName(getStoreName(pr.store_id, pr.store_name));
             const isBest = pr === cheapest;
             return (
               <div
                 key={j}
-                className="text-center rounded-lg px-3 py-2 min-w-[72px]"
-                style={isBest ? { background: "var(--savings-green)" } : { background: "#fafafa" }}
+                className="text-center px-3 py-2 min-w-[72px]"
+                style={{ background: isBest ? "var(--savings-green)" : "#fafafa", borderRadius: "var(--radius)" }}
               >
-                <p className="text-[10px] font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+                <p className="text-xs font-medium mb-1" style={{ color: "var(--text-muted-accessible)" }}>
                   {store}
                 </p>
                 <p
@@ -77,16 +80,15 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
               </div>
             );
           })}
-        </div>
-
-        <div className="shrink-0 ml-1" style={{ color: "var(--text-muted)" }}>
-          {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          <div className="shrink-0 ml-1" style={{ color: "var(--text-muted-accessible)" }}>
+            {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          </div>
         </div>
       </button>
 
       {expanded && (
         <div
-          className="px-4 pb-4 pt-1 border-t grid grid-cols-[1fr_1fr_auto] gap-4 items-end"
+          className="px-4 pb-4 pt-3 border-t grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 md:items-end"
           style={{ borderColor: "var(--border-light)", background: "#fafafa" }}
         >
           <div className="flex items-start gap-2">
@@ -102,7 +104,7 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
           </div>
 
           <div className="flex items-start gap-2">
-            <ClockIcon style={{ color: "var(--text-muted)", flexShrink: 0, marginTop: 2 }} />
+            <ClockIcon style={{ color: "var(--text-muted-accessible)", flexShrink: 0, marginTop: 2 }} />
             <div>
               <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>
                 Last updated
@@ -115,15 +117,16 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
 
           <div className="flex items-center gap-2">
             <button
-              onClick={e => { e.stopPropagation(); onAddToList(product.name); }}
-              disabled={isFavorited}
-              className="text-xs px-3 py-2 rounded-lg border font-medium transition-colors disabled:opacity-60"
+              onClick={() => onToggleList(product.name)}
+              className="text-xs px-3 py-2 border font-medium transition-colors"
               style={{
-                borderColor: "var(--border)",
+                borderColor: isFavorited ? "var(--poly-green)" : "var(--border)",
                 color: isFavorited ? "var(--poly-green)" : "var(--text-secondary)",
+                background: isFavorited ? "var(--savings-green)" : "#fff",
+                borderRadius: "var(--radius)",
               }}
             >
-              {isFavorited ? "In favorites" : "Add to favorites"}
+              {isFavorited ? "In list" : "Add to list"}
             </button>
             <button
               onClick={viewDetails}

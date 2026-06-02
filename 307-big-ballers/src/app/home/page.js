@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import Sidebar from "@/app/components/Sidebar";
 import ResultCard from "@/app/components/ResultCard";
 import { STORE_NAMES } from "@/app/components/constants";
 import { SlidersIcon, ChevronDownIcon } from "@/app/components/icons";
@@ -24,7 +23,7 @@ function SortFilterPanel({ sortAsc, setSortAsc, selectedStores, toggleStore, pri
         </button>
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
+      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-muted-accessible)" }}>
         Sort by
       </p>
       <div className="flex flex-col gap-1.5 mb-4">
@@ -45,7 +44,7 @@ function SortFilterPanel({ sortAsc, setSortAsc, selectedStores, toggleStore, pri
         ))}
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
+      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-muted-accessible)" }}>
         Stores
       </p>
       <div className="flex flex-col gap-1.5 mb-4 max-h-36 overflow-y-auto">
@@ -62,11 +61,11 @@ function SortFilterPanel({ sortAsc, setSortAsc, selectedStores, toggleStore, pri
         ))}
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
+      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-muted-accessible)" }}>
         Max price
       </p>
       <div className="flex items-center gap-1 text-sm">
-        <span style={{ color: "var(--text-muted)" }}>$</span>
+        <span style={{ color: "var(--text-muted-accessible)" }}>$</span>
         <input
           type="number"
           min="0"
@@ -74,8 +73,9 @@ function SortFilterPanel({ sortAsc, setSortAsc, selectedStores, toggleStore, pri
           value={priceCap}
           onChange={e => setPriceCap(e.target.value)}
           placeholder="any"
-          className="border rounded-lg px-2 py-1.5 w-full text-sm outline-none"
-          style={{ borderColor: "var(--border)" }}
+          aria-label="Maximum price"
+          className="border px-2 py-1.5 w-full text-sm outline-none"
+          style={{ borderColor: "var(--border)", borderRadius: "var(--radius)" }}
         />
       </div>
     </div>
@@ -112,9 +112,29 @@ function HomeInner() {
     else if (q) { setActiveQuery(q); search(q, false); }
   }, [searchParams]);
 
-  async function addToList(productName) {
+  async function toggleList(productName) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
+
+    if (addedItems.has(productName)) {
+      const { error } = await supabase
+        .from("grocery_list")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("product_name", productName);
+      if (error) {
+        setListFeedback(`Error: ${error.message}`);
+        setTimeout(() => setListFeedback(null), 3000);
+      } else {
+        setAddedItems(prev => {
+          const next = new Set(prev);
+          next.delete(productName);
+          return next;
+        });
+      }
+      return;
+    }
+
     const { error } = await supabase.from("grocery_list").insert({ user_id: user.id, product_name: productName });
     if (error) {
       setListFeedback(`Error: ${error.message}`);
@@ -170,108 +190,104 @@ function HomeInner() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: "var(--background)" }}>
-      <Sidebar />
-
-      <main className="flex-1 p-6">
-        {activeQuery ? (
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                Results for &apos;{activeQuery}&apos;
-              </h1>
-              <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                {loading ? "Searching..." : `${displayProducts.length} results found`}
-              </p>
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setFilterOpen(v => !v)}
-                className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
-                style={{ borderColor: "var(--border)", background: "#fff", color: "var(--text-primary)" }}
-              >
-                <SlidersIcon />
-                Sort & Filter
-                <ChevronDownIcon style={{ transform: filterOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-              </button>
-              {filterOpen && (
-                <SortFilterPanel
-                  sortAsc={sortAsc}
-                  setSortAsc={setSortAsc}
-                  selectedStores={selectedStores}
-                  toggleStore={toggleStore}
-                  priceCap={priceCap}
-                  setPriceCap={setPriceCap}
-                  onClear={() => {
-                    setSelectedStores(new Set(allStoreIds));
-                    setPriceCap("");
-                    setSortAsc(null);
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="mb-6">
-            <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Search products</h1>
+    <div className="p-6">
+      {activeQuery ? (
+        <div className="flex items-start justify-between mb-6 gap-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Results for &apos;{activeQuery}&apos;
+            </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-              Use the search bar above to compare prices across local stores
+              {loading ? "Searching..." : `${displayProducts.length} results found`}
             </p>
           </div>
-        )}
 
-        {listFeedback && (
-          <p className={`text-sm mb-4 ${listFeedback.startsWith("Error") ? "text-red-500" : "text-green-600"}`}>
-            {listFeedback}
-          </p>
-        )}
-
-        {loading && (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card h-24 skeleton" />
-            ))}
+          <div className="relative">
+            <button
+              onClick={() => setFilterOpen(v => !v)}
+              className="flex items-center gap-2 text-sm font-medium px-4 py-2 border transition-colors"
+              style={{ borderColor: "var(--border)", background: "#fff", color: "var(--text-primary)", borderRadius: "var(--radius)" }}
+            >
+              <SlidersIcon />
+              Sort & Filter
+              <ChevronDownIcon style={{ transform: filterOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+            </button>
+            {filterOpen && (
+              <SortFilterPanel
+                sortAsc={sortAsc}
+                setSortAsc={setSortAsc}
+                selectedStores={selectedStores}
+                toggleStore={toggleStore}
+                priceCap={priceCap}
+                setPriceCap={setPriceCap}
+                onClear={() => {
+                  setSelectedStores(new Set(allStoreIds));
+                  setPriceCap("");
+                  setSortAsc(null);
+                }}
+              />
+            )}
           </div>
-        )}
-
-        {!loading && !activeQuery && (
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Try searching for milk, eggs, or chicken to get started.
+        </div>
+      ) : (
+        <div className="mb-6">
+          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Search products</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+            Use the search bar above to compare prices across local stores
           </p>
-        )}
+        </div>
+      )}
 
-        {!loading && activeQuery && displayProducts.length === 0 && products.length > 0 && (
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            No results match your filters.
-          </p>
-        )}
+      {listFeedback && (
+        <p className={`text-sm mb-4 ${listFeedback.startsWith("Error") ? "text-red-500" : "text-green-600"}`}>
+          {listFeedback}
+        </p>
+      )}
 
-        {!loading && activeQuery && displayProducts.length === 0 && products.length === 0 && (
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            No products found for this search.
-          </p>
-        )}
-
-        <div className="flex flex-col gap-3">
-          {!loading && displayProducts.map((p, i) => (
-            <ResultCard
-              key={`${p.name}-${i}`}
-              product={p}
-              index={i}
-              onAddToList={addToList}
-              isFavorited={addedItems.has(p.name)}
-            />
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card h-24 skeleton" />
           ))}
         </div>
-      </main>
+      )}
+
+      {!loading && !activeQuery && (
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          Try searching for milk, eggs, or chicken to get started.
+        </p>
+      )}
+
+      {!loading && activeQuery && displayProducts.length === 0 && products.length > 0 && (
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          No results match your filters.
+        </p>
+      )}
+
+      {!loading && activeQuery && displayProducts.length === 0 && products.length === 0 && (
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          No products found for this search.
+        </p>
+      )}
+
+      <div className="flex flex-col gap-3">
+        {!loading && displayProducts.map((p, i) => (
+          <ResultCard
+            key={`${p.name}-${i}`}
+            product={p}
+            index={i}
+            onToggleList={toggleList}
+            isFavorited={addedItems.has(p.name)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm" style={{ color: "var(--text-muted)" }}>Loading...</div>}>
+    <Suspense fallback={<div className="p-6 text-sm" style={{ color: "var(--text-muted-accessible)" }}>Loading...</div>}>
       <HomeInner />
     </Suspense>
   );
