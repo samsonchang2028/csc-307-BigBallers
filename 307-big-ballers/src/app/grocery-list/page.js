@@ -145,7 +145,6 @@ export default function GroceryListPage() {
 
         {!loading && items.length === 0 && !dirty && (
           <div className="card p-8 text-center" style={{ color: 'var(--text-secondary)' }}>
-            <p className="text-4xl mb-3">🥦</p>
             <p>Your list is empty.</p>
             <p className="text-sm mt-1">Search for items and add them to your list.</p>
           </div>
