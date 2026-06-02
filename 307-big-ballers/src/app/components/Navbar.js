@@ -69,7 +69,7 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
             className="hidden lg:block text-xs pl-3 border-l"
             style={{ color: 'var(--text-muted-accessible)', borderColor: 'var(--border)' }}
           >
-            Grocery deals for Cal Poly students
+            Your groceries, one destination
           </span>
         </Link>
 
