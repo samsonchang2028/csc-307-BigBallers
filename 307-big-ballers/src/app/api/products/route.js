@@ -13,7 +13,7 @@ export async function GET(request) {
 
   let dbQuery = supabase
     .from("products")
-    .select(`name, category, prices ( price, original_price, scraped_at, store_id )`);
+    .select(`name, category, unit, image_url, prices ( price, original_price, scraped_at, store_id )`);
 
   if (category) {
     dbQuery = dbQuery.eq("category", category);
@@ -47,6 +47,7 @@ export async function GET(request) {
   // Normalize Kroger results into the same shape as Supabase products
   const krogerProducts = krogerItems.map((item) => ({
     name: item.name,
+    image_url: item.image_url ?? null,
     prices: [
       {
         price: item.sale_price ?? item.price,

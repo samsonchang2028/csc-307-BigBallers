@@ -1,20 +1,23 @@
-import { Suspense } from "react";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/app/components/Navbar";
+import AppShell from "@/app/components/AppShell";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata = {
   title: "OptiCart",
-  description: "Compare grocery prices across local stores",
+  description: "Compare grocery prices across local stores for Cal Poly students",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <Suspense fallback={null}>
-          <Navbar />
-        </Suspense>
-        {children}
+      <body className={inter.variable}>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

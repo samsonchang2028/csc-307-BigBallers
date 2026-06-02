@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { UserIcon } from './icons';
 
-// im jus using this component in the header to show the user email and a logout button if they're logged in, or a login button if they're not
 export default function AuthButton() {
   const [user, setUser] = useState(null);
   const router = useRouter();
@@ -26,23 +26,32 @@ export default function AuthButton() {
 
   if (user) {
     return (
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handleSignOut}
-          className="bg-black text-white rounded px-4 py-2 text-sm"
-        >
+      <button
+        onClick={handleSignOut}
+        className="flex flex-col items-center gap-0.5 cursor-pointer group transition-colors"
+        title="Sign out"
+      >
+        <UserIcon style={{ color: 'var(--poly-green)' }} />
+        <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
           Sign out
-        </button>
-      </div>
+        </span>
+      </button>
     );
   }
 
   return (
     <button
       onClick={() => router.push('/login')}
-      className="bg-black text-white rounded px-4 py-2 text-sm"
+      className="flex flex-col items-center gap-0.5 cursor-pointer group transition-colors"
+      title="Log in"
     >
-      Log in
+      <UserIcon
+        className="transition-colors group-hover:stroke-[var(--poly-green)]"
+        style={{ color: 'var(--text-secondary)' }}
+      />
+      <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+        Log in
+      </span>
     </button>
   );
 }

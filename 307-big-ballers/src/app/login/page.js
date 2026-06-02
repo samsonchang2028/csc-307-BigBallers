@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import CalPolyBadge from '@/app/components/CalPolyBadge';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login');
@@ -36,13 +37,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--background)' }}>
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <span className="text-4xl">🛒</span>
-          <h1 className="text-2xl font-bold mt-2" style={{ color: '#154734' }}>OptiCart</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Compare grocery prices across local stores</p>
+        <div className="flex flex-col items-center text-center mb-8">
+          <CalPolyBadge size={48} />
+          <h1 className="text-2xl font-bold mt-3" style={{ color: 'var(--poly-green)' }}>OptiCart</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+            Compare grocery prices across local stores
+          </p>
         </div>
 
         <form
@@ -53,8 +56,8 @@ export default function LoginPage() {
             {mode === 'login' ? 'Log in to your account' : 'Create an account'}
           </h2>
 
-          {error   && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-          {success && <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">{success}</p>}
+          {error   && <p className="text-sm text-red-600 bg-red-50 px-3 py-2" style={{ borderRadius: 'var(--radius)' }}>{error}</p>}
+          {success && <p className="text-sm text-green-700 bg-green-50 px-3 py-2" style={{ borderRadius: 'var(--radius)' }}>{success}</p>}
 
           <input
             type="email"
@@ -62,10 +65,8 @@ export default function LoginPage() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="border rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ borderColor: 'var(--border)' }}
-            onFocus={e => e.target.style.borderColor = '#154734'}
-            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            className="search-input border px-3 py-2 text-sm outline-none"
+            style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius)' }}
           />
 
           <input
@@ -74,17 +75,15 @@ export default function LoginPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
-            className="border rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ borderColor: 'var(--border)' }}
-            onFocus={e => e.target.style.borderColor = '#154734'}
-            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            className="search-input border px-3 py-2 text-sm outline-none"
+            style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius)' }}
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 transition-opacity"
-            style={{ background: '#154734' }}
+            className="px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 transition-opacity"
+            style={{ background: 'var(--poly-green)', borderRadius: 'var(--radius)' }}
           >
             {loading
               ? (mode === 'login' ? 'Logging in...' : 'Signing up...')
@@ -94,13 +93,13 @@ export default function LoginPage() {
           <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
             {mode === 'login' ? (
               <>No account?{' '}
-                <button type="button" onClick={() => switchMode('signup')} className="font-medium" style={{ color: '#154734' }}>
+                <button type="button" onClick={() => switchMode('signup')} className="font-medium" style={{ color: 'var(--poly-green)' }}>
                   Sign up
                 </button>
               </>
             ) : (
               <>Have an account?{' '}
-                <button type="button" onClick={() => switchMode('login')} className="font-medium" style={{ color: '#154734' }}>
+                <button type="button" onClick={() => switchMode('login')} className="font-medium" style={{ color: 'var(--poly-green)' }}>
                   Log in
                 </button>
               </>
