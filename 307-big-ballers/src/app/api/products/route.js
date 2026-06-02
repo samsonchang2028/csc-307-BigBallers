@@ -47,6 +47,7 @@ export async function GET(request) {
   // Normalize Kroger results into the same shape as Supabase products
   const krogerProducts = krogerItems.map((item) => ({
     name: item.name,
+    image_url: item.image_url ?? null,
     prices: [
       {
         price: item.sale_price ?? item.price,
