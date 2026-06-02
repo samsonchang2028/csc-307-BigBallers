@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import AuthButton from './AuthButton';
 import { SearchIcon, HeartIcon, CloseIcon, MenuIcon } from './icons';
+import cartIcon from '@/assets/opticart-logo.png';
+import textLogo from '@/assets/opticart-text-logo.png';
 
 const HIDDEN_ON = ['/login', '/auth/callback'];
 
@@ -60,15 +62,14 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
           </button>
         )}
 
-        <Link href="/" className="flex items-center gap-3 shrink-0">
-          <span className="font-bold text-xl" style={{ color: 'var(--poly-green)' }}>
-            OptiCart
-          </span>
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <img src={cartIcon.src} alt="OptiCart cart icon" style={{ height: 54, width: 'auto' }} />
+          <img src={textLogo.src} alt="OptiCart" style={{ height: 42, width: 'auto' }} />
           <span
             className="hidden lg:block text-xs pl-3 border-l"
             style={{ color: 'var(--text-muted-accessible)', borderColor: 'var(--border)' }}
           >
-            Grocery deals for Cal Poly students
+            Your groceries, one destination
           </span>
         </Link>
 

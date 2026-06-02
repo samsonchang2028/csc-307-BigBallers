@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HomeIcon, SearchIcon, HeartIcon, InfoIcon, GradCapIcon, CloseIcon } from "./icons";
-import CalPolyBadge from "./CalPolyBadge";
+import calPolyLogo from "@/assets/calpoly-logo.png";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/home", label: "Search", icon: SearchIcon },
   { href: "/grocery-list", label: "Grocery List", icon: HeartIcon },
-  { href: "/#about", label: "About", icon: InfoIcon },
 ];
 
 export default function Sidebar({ open = false, onClose = () => {} }) {
@@ -59,19 +58,16 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         style={{ background: "#faf9f6", borderColor: "var(--border-light)", borderRadius: "var(--radius)" }}
       >
         <div className="flex items-start gap-2 mb-3">
-          <div style={{ color: "var(--poly-green)" }}>
-            <GradCapIcon style={{ width: 18, height: 18 }} />
-          </div>
           <div>
             <p className="text-xs font-semibold leading-snug" style={{ color: "var(--poly-green)" }}>
               Built for Cal Poly
             </p>
             <p className="text-xs leading-relaxed mt-1" style={{ color: "var(--text-secondary)" }}>
-              Save more. Stress less. We compare prices at local stores so you don&apos;t have to.
+              All items and prices are sourced directly from SLO outlets to give the most accurate and up-to-date information
             </p>
           </div>
         </div>
-        <CalPolyBadge />
+        <img src={calPolyLogo.src} alt="Cal Poly" style={{ width: '50%', height: 'auto' }} />
       </div>
     </aside>
   );
