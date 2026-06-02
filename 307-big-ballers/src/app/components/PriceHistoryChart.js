@@ -10,9 +10,7 @@ const RANGES = [
 ];
 
 export default function PriceHistoryChart({ prices }) {
-  const [range, setRange] = useState(7);
-
-  const series = useMemo(() => buildPriceHistorySeries(prices, range), [prices, range]);
+  const series = useMemo(() => buildPriceHistorySeries(prices, 7), [prices]);
 
   if (!series.length) {
     return (
@@ -54,24 +52,8 @@ export default function PriceHistoryChart({ prices }) {
     <div className="card p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-base" style={{ color: "var(--text-primary)" }}>
-          {range}-day price history
+          7-day price history
         </h3>
-        <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "#f3f4f6" }}>
-          {RANGES.map(r => (
-            <button
-              key={r.label}
-              onClick={() => setRange(r.days)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
-              style={
-                range === r.days
-                  ? { background: "var(--poly-green)", color: "#fff" }
-                  : { color: "var(--text-secondary)" }
-              }
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full" aria-label="Price history chart">

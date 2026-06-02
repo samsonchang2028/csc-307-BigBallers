@@ -106,7 +106,7 @@ function ProductDetailInner() {
   const avg = prices.length
     ? prices.reduce((s, p) => s + parseFloat(p.price), 0) / prices.length
     : 0;
-  const belowAvg = cheapest && avg > 0
+  const belowAvg = cheapest && prices.length > 1 && avg > 0
     ? { amount: (avg - parseFloat(cheapest.price)).toFixed(2), pct: Math.round((1 - parseFloat(cheapest.price) / avg) * 100) }
     : null;
 
@@ -125,7 +125,7 @@ function ProductDetailInner() {
         {/* Left column */}
         <div className="space-y-5">
           <div className="flex gap-6 items-start">
-            <ProductPlaceholder name={product.name} index={0} size="lg" />
+            <ProductPlaceholder name={product.name} image_url={product.image_url} index={0} size="lg" />
             <div className="flex-1">
               <h1 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
                 {product.name}

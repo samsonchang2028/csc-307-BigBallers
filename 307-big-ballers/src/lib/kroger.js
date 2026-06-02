@@ -74,12 +74,19 @@ export async function searchKrogerProducts(query) {
         const json = await res.json();
         return (json.data ?? []).map((item) => {
           const priceInfo = item.items?.[0]?.price;
+          const frontImg = item.images?.find(img => img.perspective === "front");
+          const thumbUrl = frontImg?.sizes?.find(s => s.size === "medium")?.url
+            ?? frontImg?.sizes?.find(s => s.size === "small")?.url
+            ?? frontImg?.sizes?.find(s => s.size === "thumbnail")?.url
+            ?? frontImg?.sizes?.[0]?.url
+            ?? null;
           return {
             name: item.description,
             price: priceInfo?.regular ?? null,
             sale_price: priceInfo?.promo ?? null,
             store: name,
             source: "kroger",
+            image_url: thumbUrl,
           };
         }).filter((item) => item.price !== null);
       })
