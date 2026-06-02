@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CategoryChip from '@/app/components/CategoryChip';
 import DealCard, { DealCardSkeleton } from '@/app/components/DealCard';
+import StorePanel from '@/app/components/StorePanel';
 import { CATEGORIES } from '@/app/components/constants';
 import { saveProductForDetail } from '@/app/components/utils';
 import { TagIcon, ArrowRightIcon } from '@/app/components/icons';
@@ -13,6 +14,7 @@ export default function RootPage() {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [activeStore, setActiveStore] = useState(null);
 
   useEffect(() => {
     fetch('/api/deals')
@@ -90,6 +92,7 @@ export default function RootPage() {
                     });
                     router.push('/product');
                   }}
+                  onStoreClick={setActiveStore}
                 />
               ))}
         </div>
@@ -100,6 +103,8 @@ export default function RootPage() {
           </p>
         )}
       </div>
+
+      {activeStore && <StorePanel storeName={activeStore} onClose={() => setActiveStore(null)} />}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { TagIcon } from "./icons";
 import { getStoreName } from "./constants";
 import ProductPlaceholder from "./ProductPlaceholder";
 
-export default function DealCard({ deal, index = 0, onClick }) {
+export default function DealCard({ deal, index = 0, onClick, onStoreClick }) {
   const storeName = getStoreName(deal.store_id, deal.store_name);
 
   return (
@@ -15,7 +15,11 @@ export default function DealCard({ deal, index = 0, onClick }) {
           <p className="text-2xl font-bold leading-none mb-1" style={{ color: 'var(--poly-green)' }}>
             ${parseFloat(deal.price).toFixed(2)}
           </p>
-          <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{storeName}</p>
+          <button
+            onClick={e => { e.stopPropagation(); onStoreClick?.(storeName); }}
+            className="text-xs truncate hover:underline text-left"
+            style={{ color: 'var(--text-secondary)' }}
+          >{storeName}</button>
         </div>
       </div>
       <div
