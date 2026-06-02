@@ -177,7 +177,7 @@ function HomeInner() {
         {activeQuery ? (
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
                 Results for &apos;{activeQuery}&apos;
               </h1>
               <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
@@ -214,7 +214,7 @@ function HomeInner() {
           </div>
         ) : (
           <div className="mb-6">
-            <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Search products</h1>
+            <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Search products</h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
               Use the search bar above to compare prices across local stores
             </p>

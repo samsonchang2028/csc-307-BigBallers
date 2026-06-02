@@ -5,6 +5,7 @@ import Navbar from "@/app/components/Navbar";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata = {

@@ -33,11 +33,8 @@ export default function RootPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
-      <div
-        className="border-b"
-        style={{ background: '#fff', borderColor: 'var(--border-light)' }}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-4 flex gap-3 flex-wrap">
+      <div className="border-b bg-white" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="max-w-6xl mx-auto px-6 py-4 flex gap-2 flex-wrap">
           {CATEGORIES.map(cat => (
             <CategoryChip
               key={cat.label}
@@ -49,12 +46,12 @@ export default function RootPage() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
-        <div className="flex items-start justify-between mb-6">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-6">
+        <div className="flex items-start justify-between mb-5">
           <div>
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-2 mb-1">
               <TagIcon style={{ color: 'var(--poly-green)' }} />
-              <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
                 Best Deals Today
               </h1>
             </div>
@@ -64,7 +61,7 @@ export default function RootPage() {
           </div>
           <button
             onClick={() => router.push('/home')}
-            className="flex items-center gap-1 text-sm font-semibold transition-opacity hover:opacity-70 shrink-0 mt-1"
+            className="flex items-center gap-1 text-sm font-medium cursor-pointer"
             style={{ color: 'var(--poly-green)' }}
           >
             See all deals
@@ -80,10 +77,10 @@ export default function RootPage() {
                   key={`${deal.product_id}-${deal.store_id}`}
                   deal={deal}
                   index={i}
-                  animationDelay={i * 60}
                   onClick={() => {
                     saveProductForDetail({
                       name: deal.name,
+                      unit: deal.unit,
                       prices: [{
                         price: deal.price,
                         original_price: deal.original_price,

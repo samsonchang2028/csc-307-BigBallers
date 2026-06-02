@@ -11,7 +11,7 @@ export async function GET() {
       price,
       original_price,
       store_id,
-      products ( id, name ),
+      products ( id, name, unit ),
       stores ( name )
     `)
     .not("original_price", "is", null)
@@ -24,6 +24,7 @@ export async function GET() {
     .map(row => ({
       product_id: row.products?.id,
       name: row.products?.name,
+      unit: row.products?.unit,
       price: row.price,
       original_price: row.original_price,
       savings: (parseFloat(row.original_price) - parseFloat(row.price)).toFixed(2),

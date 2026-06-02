@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ProductPlaceholder from "@/app/components/ProductPlaceholder";
 import PriceHistoryChart from "@/app/components/PriceHistoryChart";
-import { getStoreName, extractSize } from "@/app/components/constants";
+import { getStoreName } from "@/app/components/constants";
 import {
   loadProductForDetail,
   saveProductForDetail,
@@ -102,7 +102,6 @@ function ProductDetailInner() {
 
   const prices = [...(product.prices ?? [])].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
   const cheapest = prices[0];
-  const size = extractSize(product.name);
   const brand = extractBrand(product.name);
   const avg = prices.length
     ? prices.reduce((s, p) => s + parseFloat(p.price), 0) / prices.length
@@ -128,7 +127,7 @@ function ProductDetailInner() {
           <div className="flex gap-6 items-start">
             <ProductPlaceholder name={product.name} index={0} size="lg" />
             <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+              <h1 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
                 {product.name}
               </h1>
               {product.category && (
@@ -140,9 +139,9 @@ function ProductDetailInner() {
                   {product.category}
                 </span>
               )}
-              {size && (
+              {product.unit && (
                 <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-                  {brand} product{size ? `, ${size}` : ""}
+                  {brand} product, {product.unit}
                 </p>
               )}
               <button
@@ -263,7 +262,7 @@ function ProductDetailInner() {
       <div className="flex gap-3 mt-6">
         <SpecCard icon={TagIcon} label="Brand" value={brand} />
         <SpecCard icon={TagIcon} label="Category" value={product.category ?? "Grocery"} />
-        <SpecCard icon={InfoIcon} label="Size" value={size ?? "—"} />
+        <SpecCard icon={InfoIcon} label="Size" value={product.unit ?? "—"} />
       </div>
     </div>
   );

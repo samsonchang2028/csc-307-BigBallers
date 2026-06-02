@@ -28,7 +28,7 @@ export default function AuthButton() {
     return (
       <button
         onClick={handleSignOut}
-        className="flex flex-col items-center gap-0.5 group transition-colors"
+        className="flex flex-col items-center gap-0.5 cursor-pointer group transition-colors"
         title="Sign out"
       >
         <UserIcon style={{ color: 'var(--poly-green)' }} />
@@ -42,7 +42,7 @@ export default function AuthButton() {
   return (
     <button
       onClick={() => router.push('/login')}
-      className="flex flex-col items-center gap-0.5 group transition-colors"
+      className="flex flex-col items-center gap-0.5 cursor-pointer group transition-colors"
       title="Log in"
     >
       <UserIcon

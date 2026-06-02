@@ -45,16 +45,16 @@ function NavbarInner({ searchInput, onSearchChange, onSearch }) {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b backdrop-blur-sm"
-      style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'var(--border)' }}
+      className="sticky top-0 z-40 border-b bg-white"
+      style={{ borderColor: 'var(--border)' }}
     >
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <span className="font-bold text-[22px] tracking-tight" style={{ color: 'var(--poly-green)' }}>
+      <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-6">
+        <Link href="/" className="flex items-center gap-3 shrink-0">
+          <span className="font-bold text-xl" style={{ color: 'var(--poly-green)' }}>
             OptiCart
           </span>
           <span
-            className="hidden lg:block text-xs font-medium pl-3 border-l"
+            className="hidden lg:block text-xs pl-3 border-l"
             style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
           >
             Grocery deals for Cal Poly students
@@ -62,8 +62,8 @@ function NavbarInner({ searchInput, onSearchChange, onSearch }) {
         </Link>
 
         <div
-          className="flex flex-1 items-center rounded-full px-4 py-2.5 gap-2.5 max-w-xl mx-auto transition-shadow"
-          style={{ border: '1.5px solid var(--border)', background: '#fafafa' }}
+          className="flex flex-1 items-center rounded-full px-4 py-2 gap-2 max-w-xl mx-auto border"
+          style={{ borderColor: 'var(--border)', background: '#fafafa' }}
         >
           <SearchIcon style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           <input
@@ -72,13 +72,12 @@ function NavbarInner({ searchInput, onSearchChange, onSearch }) {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Search for eggs, milk, chicken..."
-            className="search-input flex-1 bg-transparent outline-none text-sm"
-            style={{ color: 'var(--text-primary)' }}
+            className="search-input flex-1 bg-transparent outline-none text-sm border-none"
           />
           {value && (
             <button
               onClick={clearSearch}
-              className="p-0.5 rounded-full transition-colors hover:bg-gray-200"
+              className="cursor-pointer"
               style={{ color: 'var(--text-muted)' }}
               aria-label="Clear search"
             >
@@ -88,15 +87,8 @@ function NavbarInner({ searchInput, onSearchChange, onSearch }) {
         </div>
 
         <div className="flex items-center gap-4 shrink-0">
-          <Link
-            href="/grocery-list"
-            className="flex flex-col items-center gap-0.5 group transition-colors"
-            title="Favorites"
-          >
-            <HeartIcon
-              className="transition-colors group-hover:stroke-[var(--poly-green)]"
-              style={{ color: 'var(--text-secondary)' }}
-            />
+          <Link href="/grocery-list" className="flex flex-col items-center gap-0.5" title="Favorites">
+            <HeartIcon style={{ color: 'var(--text-secondary)' }} />
             <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>
               Favorites
             </span>

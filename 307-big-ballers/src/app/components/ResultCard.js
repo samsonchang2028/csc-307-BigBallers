@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductPlaceholder from "./ProductPlaceholder";
-import { extractSize, getStoreName } from "./constants";
+import { getStoreName } from "./constants";
 import { formatRelativeTime, saveProductForDetail, shortStoreName } from "./utils";
 import { LeafIcon, TagIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from "./icons";
 
@@ -13,7 +13,6 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
 
   const prices = [...(product.prices ?? [])].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
   const cheapest = prices[0];
-  const size = extractSize(product.name);
   const displayStores = prices.slice(0, 3);
 
   const cheapestStore = cheapest ? getStoreName(cheapest.store_id, cheapest.store_name) : null;
@@ -32,10 +31,10 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden cursor-pointer">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-4 p-4 text-left transition-colors hover:bg-[#fafafa]"
+        className="w-full flex items-center gap-4 p-4 text-left cursor-pointer hover:bg-gray-50"
       >
         <ProductPlaceholder name={product.name} index={index} size="md" />
 
@@ -43,9 +42,9 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
           <p className="font-semibold text-[15px] mb-0.5" style={{ color: "var(--text-primary)" }}>
             {product.name}
           </p>
-          {size && (
+          {product.unit && (
             <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
-              {size}
+              {product.unit}
             </p>
           )}
           {cheapestStore && (
@@ -128,8 +127,8 @@ export default function ResultCard({ product, index, onAddToList, isFavorited })
             </button>
             <button
               onClick={viewDetails}
-              className="text-sm font-semibold text-white px-4 py-2 rounded-lg transition-opacity hover:opacity-90"
-              style={{ background: "var(--poly-green)" }}
+              className="text-sm font-medium text-white px-4 py-2 cursor-pointer"
+              style={{ background: 'var(--poly-green)', borderRadius: 'var(--radius)' }}
             >
               View details
             </button>

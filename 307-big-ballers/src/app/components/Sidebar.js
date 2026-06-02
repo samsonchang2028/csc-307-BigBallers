@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 function CalPolyBadge() {
   return (
     <svg width="36" height="36" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect width="48" height="48" rx="8" fill="#154734" />
+      <rect width="48" height="48" rx="4" fill="#154734" />
       <text x="24" y="31" textAnchor="middle" fill="#F8E08E" fontSize="18" fontWeight="700" fontFamily="system-ui, sans-serif">
         CP
       </text>
@@ -44,7 +44,7 @@ export default function Sidebar() {
             <Link
               key={label}
               href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-3 px-3 py-2 text-sm font-medium cursor-pointer"
               style={
                 active
                   ? { background: "var(--savings-green)", color: "var(--poly-green)" }
@@ -59,8 +59,8 @@ export default function Sidebar() {
       </nav>
 
       <div
-        className="mt-auto rounded-xl p-4 border"
-        style={{ background: "#faf9f6", borderColor: "var(--border-light)" }}
+        className="mt-auto p-4 border"
+        style={{ background: "#faf9f6", borderColor: "var(--border-light)", borderRadius: "var(--radius)" }}
       >
         <div className="flex items-start gap-2 mb-3">
           <div style={{ color: "var(--poly-green)" }}>

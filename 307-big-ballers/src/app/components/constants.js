@@ -20,8 +20,3 @@ export const STORE_NAMES = {
 export function getStoreName(id, fallback) {
   return STORE_NAMES[id] ?? fallback ?? id ?? "Unknown";
 }
-
-export function extractSize(name) {
-  const match = name?.match(/\b(\d+\.?\d*\s*(?:oz|lb|lbs|gal|ct|pk|pack|count|g|kg|ml|l))\b/i);
-  return match ? match[1] : null;
-}
