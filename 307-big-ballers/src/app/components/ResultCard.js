@@ -7,7 +7,7 @@ import { getStoreName } from "./constants";
 import { formatRelativeTime, saveProductForDetail, shortStoreName } from "./utils";
 import { LeafIcon, TagIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from "./icons";
 
-export default function ResultCard({ product, index, onToggleList, isFavorited }) {
+export default function ResultCard({ product, index, onToggleList, isFavorited, onStoreClick }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(index === 0);
 
@@ -39,7 +39,6 @@ export default function ResultCard({ product, index, onToggleList, isFavorited }
       >
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <ProductPlaceholder name={product.name} index={index} size="md" imageUrl={product.image_url} />
-
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-[15px] mb-0.5" style={{ color: "var(--text-primary)" }}>
               {product.name}
@@ -68,13 +67,14 @@ export default function ResultCard({ product, index, onToggleList, isFavorited }
                 className="text-center px-3 py-2 min-w-[72px]"
                 style={{ background: isBest ? "var(--savings-green)" : "#fafafa", borderRadius: "var(--radius)" }}
               >
-                <p className="text-xs font-medium mb-1" style={{ color: "var(--text-muted-accessible)" }}>
-                  {store}
-                </p>
-                <p
-                  className="text-sm font-bold"
-                  style={{ color: isBest ? "var(--poly-green)" : "var(--text-primary)" }}
+                <button
+                  onClick={e => { e.stopPropagation(); onStoreClick?.(store); }}
+                  className="text-xs font-medium mb-1 hover:underline block w-full"
+                  style={{ color: "var(--text-muted-accessible)" }}
                 >
+                  {store}
+                </button>
+                <p className="text-sm font-bold" style={{ color: isBest ? "var(--poly-green)" : "var(--text-primary)" }}>
                   ${parseFloat(pr.price).toFixed(2)}
                 </p>
               </div>
@@ -94,24 +94,16 @@ export default function ResultCard({ product, index, onToggleList, isFavorited }
           <div className="flex items-start gap-2">
             <TagIcon style={{ color: "var(--poly-green)", flexShrink: 0, marginTop: 2 }} />
             <div>
-              <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>
-                Why this price?
-              </p>
-              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {whyText}
-              </p>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>Why this price?</p>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>{whyText}</p>
             </div>
           </div>
 
           <div className="flex items-start gap-2">
             <ClockIcon style={{ color: "var(--text-muted-accessible)", flexShrink: 0, marginTop: 2 }} />
             <div>
-              <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>
-                Last updated
-              </p>
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                {formatRelativeTime(lastUpdated)}
-              </p>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>Last updated</p>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{formatRelativeTime(lastUpdated)}</p>
             </div>
           </div>
 
@@ -130,8 +122,8 @@ export default function ResultCard({ product, index, onToggleList, isFavorited }
             </button>
             <button
               onClick={viewDetails}
-              className="text-sm font-medium text-white px-4 py-2 cursor-pointer"
-              style={{ background: 'var(--poly-green)', borderRadius: 'var(--radius)' }}
+              className="text-sm font-medium text-white px-4 py-2"
+              style={{ background: "var(--poly-green)", borderRadius: "var(--radius)" }}
             >
               View details
             </button>

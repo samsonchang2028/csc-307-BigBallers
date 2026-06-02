@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ResultCard from "@/app/components/ResultCard";
+import StorePanel from "@/app/components/StorePanel";
 import { STORE_NAMES } from "@/app/components/constants";
 import { SlidersIcon, ChevronDownIcon } from "@/app/components/icons";
 
@@ -113,6 +114,7 @@ function HomeInner() {
   const [addedItems, setAddedItems] = useState(new Set());
   const [activeQuery, setActiveQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [activeStore, setActiveStore] = useState(null);
 
   useEffect(() => {
     async function init() {
@@ -292,8 +294,10 @@ function HomeInner() {
             index={i}
             onToggleList={toggleList}
             isFavorited={addedItems.has(p.name)}
+            onStoreClick={setActiveStore}
           />
         ))}
+      {activeStore && <StorePanel storeName={activeStore} onClose={() => setActiveStore(null)} />}
       </div>
     </div>
   );

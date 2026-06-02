@@ -1,9 +1,11 @@
-import { TagIcon } from "./icons";
+﻿import { TagIcon } from "./icons";
 import { getStoreName } from "./constants";
+import { shortStoreName } from "./utils";
 import ProductPlaceholder from "./ProductPlaceholder";
 
-export default function DealCard({ deal, index = 0, onClick }) {
+export default function DealCard({ deal, index = 0, onClick, onStoreClick }) {
   const storeName = getStoreName(deal.store_id, deal.store_name);
+  const shortStore = shortStoreName(storeName);
 
   return (
     <button onClick={onClick} className="card card-hover text-left overflow-hidden flex flex-col">
@@ -15,7 +17,14 @@ export default function DealCard({ deal, index = 0, onClick }) {
           <p className="text-2xl font-bold leading-none mb-1" style={{ color: 'var(--poly-green)' }}>
             ${parseFloat(deal.price).toFixed(2)}
           </p>
-          <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{storeName}</p>
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={e => { e.stopPropagation(); onStoreClick?.(shortStore); }}
+            onKeyDown={e => e.key === 'Enter' && (e.stopPropagation(), onStoreClick?.(shortStore))}
+            className="text-xs truncate hover:underline text-left cursor-pointer"
+            style={{ color: 'var(--text-secondary)' }}
+          >{storeName}</span>
         </div>
       </div>
       <div
