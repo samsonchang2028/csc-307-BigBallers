@@ -10,7 +10,23 @@ import { SlidersIcon, ChevronDownIcon } from "@/app/components/icons";
 const krogerStoreIdMap = { Ralphs: "kroger-ralphs", "Food 4 Less": "kroger-food4less" };
 const allStoreIds = Object.keys(STORE_NAMES);
 
-function SortFilterPanel({ sortAsc, setSortAsc, selectedStores, toggleStore, priceCap, setPriceCap, onClear }) {
+// Categories sold by weight — assume 1 lb if no unit found
+const PER_LB_CATEGORIES = new Set(["Meat & Seafood", "Fruit", "Vegetables"]);
+
+function parseQuantity(name, category) {
+  if (!name) return null;
+  const match = name.match(/(\d+(?:\.\d+)?)\s*(?:ct|count|oz|fl\.?\s*oz|lb|lbs|g|kg|ml|l|pack|pk|piece|pc|slices?)/i);
+  if (match) return parseFloat(match[1]);
+  if (category && PER_LB_CATEGORIES.has(category)) return 1;
+  return null;
+}
+
+function unitPrice(price, name, category) {
+  const qty = parseQuantity(name, category);
+  return qty ? parseFloat(price) / qty : null;
+}
+
+function SortFilterPanel({ sortKey, setSortKey, selectedStores, toggleStore, priceCap, setPriceCap, onClear }) {
   return (
     <div
       className="absolute right-0 top-full mt-2 w-64 card p-4 z-20 shadow-lg"
@@ -28,15 +44,17 @@ function SortFilterPanel({ sortAsc, setSortAsc, selectedStores, toggleStore, pri
       </p>
       <div className="flex flex-col gap-1.5 mb-4">
         {[
-          { label: "Relevance", val: null },
-          { label: "Price: Low to High", val: true },
-          { label: "Price: High to Low", val: false },
+          { label: "Relevance",                 val: "relevance"  },
+          { label: "Price: Low to High",        val: "price-asc"  },
+          { label: "Price: High to Low",        val: "price-desc" },
+          { label: "Unit Price: Low to High",   val: "unit-asc"   },
+          { label: "Unit Price: High to Low",   val: "unit-desc"  },
         ].map(opt => (
-          <label key={opt.label} className="flex items-center gap-2 text-sm cursor-pointer">
+          <label key={opt.val} className="flex items-center gap-2 text-sm cursor-pointer">
             <input
               type="radio"
-              checked={sortAsc === opt.val}
-              onChange={() => setSortAsc(opt.val)}
+              checked={sortKey === opt.val}
+              onChange={() => setSortKey(opt.val)}
               style={{ accentColor: "var(--poly-green)" }}
             />
             {opt.label}
@@ -88,7 +106,7 @@ function HomeInner() {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sortAsc, setSortAsc] = useState(null);
+  const [sortKey, setSortKey] = useState("relevance");
   const [selectedStores, setSelectedStores] = useState(new Set(allStoreIds));
   const [priceCap, setPriceCap] = useState("");
   const [listFeedback, setListFeedback] = useState(null);
@@ -126,11 +144,7 @@ function HomeInner() {
         setListFeedback(`Error: ${error.message}`);
         setTimeout(() => setListFeedback(null), 3000);
       } else {
-        setAddedItems(prev => {
-          const next = new Set(prev);
-          next.delete(productName);
-          return next;
-        });
+        setAddedItems(prev => { const next = new Set(prev); next.delete(productName); return next; });
       }
       return;
     }
@@ -164,18 +178,26 @@ function HomeInner() {
       }))
       .filter(p => p.prices.length > 0);
 
-    if (sortAsc === null) return result;
+    if (sortKey === "relevance") return result;
+
+    const asc = sortKey === "price-asc" || sortKey === "unit-asc";
+    const byUnit = sortKey === "unit-asc" || sortKey === "unit-desc";
+
     return result
       .map(p => ({
         ...p,
-        prices: [...p.prices].sort((a, b) =>
-          sortAsc ? parseFloat(a.price) - parseFloat(b.price) : parseFloat(b.price) - parseFloat(a.price)
-        ),
+        prices: [...p.prices].sort((a, b) => {
+          const av = byUnit ? (unitPrice(a.price, p.name, p.category) ?? Infinity) : parseFloat(a.price);
+          const bv = byUnit ? (unitPrice(b.price, p.name, p.category) ?? Infinity) : parseFloat(b.price);
+          return asc ? av - bv : bv - av;
+        }),
       }))
       .sort((a, b) => {
         const aMin = Math.min(...a.prices.map(pr => parseFloat(pr.price)));
         const bMin = Math.min(...b.prices.map(pr => parseFloat(pr.price)));
-        return sortAsc ? aMin - bMin : bMin - aMin;
+        const aVal = byUnit ? (unitPrice(aMin, a.name, a.category) ?? Infinity) : aMin;
+        const bVal = byUnit ? (unitPrice(bMin, b.name, b.category) ?? Infinity) : bMin;
+        return asc ? aVal - bVal : bVal - aVal;
       });
   })();
 
@@ -214,17 +236,13 @@ function HomeInner() {
             </button>
             {filterOpen && (
               <SortFilterPanel
-                sortAsc={sortAsc}
-                setSortAsc={setSortAsc}
+                sortKey={sortKey}
+                setSortKey={setSortKey}
                 selectedStores={selectedStores}
                 toggleStore={toggleStore}
                 priceCap={priceCap}
                 setPriceCap={setPriceCap}
-                onClear={() => {
-                  setSelectedStores(new Set(allStoreIds));
-                  setPriceCap("");
-                  setSortAsc(null);
-                }}
+                onClear={() => { setSelectedStores(new Set(allStoreIds)); setPriceCap(""); setSortKey("relevance"); }}
               />
             )}
           </div>
@@ -259,15 +277,11 @@ function HomeInner() {
       )}
 
       {!loading && activeQuery && displayProducts.length === 0 && products.length > 0 && (
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          No results match your filters.
-        </p>
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No results match your filters.</p>
       )}
 
       {!loading && activeQuery && displayProducts.length === 0 && products.length === 0 && (
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          No products found for this search.
-        </p>
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No products found for this search.</p>
       )}
 
       <div className="flex flex-col gap-3">
