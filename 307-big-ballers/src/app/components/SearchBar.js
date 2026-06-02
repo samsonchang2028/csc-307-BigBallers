@@ -11,22 +11,19 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
   const debounceRef = useRef(null);
+  const trimmed = query.trim();
+  const canSuggest = trimmed.length >= 2;
 
-  // Debounced fetch
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setSuggestions([]);
-      setOpen(false);
-      return;
-    }
+    if (!canSuggest) return;
+
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`/api/products?q=${encodeURIComponent(trimmed)}`);
         const data = await res.json();
         if (Array.isArray(data)) {
-          // Deduplicate by name, take first 6
           const seen = new Set();
           const unique = data.filter(p => {
             if (seen.has(p.name)) return false;
@@ -38,14 +35,15 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
         }
       } catch {
         setSuggestions([]);
+        setOpen(false);
       } finally {
         setLoading(false);
       }
     }, 300);
-    return () => clearTimeout(debounceRef.current);
-  }, [query]);
 
-  // Close on outside click
+    return () => clearTimeout(debounceRef.current);
+  }, [trimmed, canSuggest]);
+
   useEffect(() => {
     function handleClick(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -71,31 +69,42 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
     navigate(name);
   }
 
-  // Cheapest price across all stores for a suggestion
+  function handleChange(e) {
+    const next = e.target.value;
+    setQuery(next);
+    if (next.trim().length < 2) {
+      setSuggestions([]);
+      setOpen(false);
+    }
+  }
+
   function cheapestPrice(product) {
     if (!product.prices?.length) return null;
     const min = Math.min(...product.prices.map(p => parseFloat(p.price)));
     return isNaN(min) ? null : min.toFixed(2);
   }
 
+  const visibleSuggestions = canSuggest ? suggestions : [];
+  const dropdownOpen = open && canSuggest;
+
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
       <div
         className="flex items-center border rounded-full px-4 py-3 gap-2 shadow-sm"
-        style={{ borderColor: open ? '#154734' : '#e5e7eb', background: '#fff', transition: 'border-color 0.15s' }}
+        style={{ borderColor: dropdownOpen ? '#154734' : '#e5e7eb', background: '#fff', transition: 'border-color 0.15s' }}
       >
-        <span className="text-gray-400 text-lg">🔍</span>
+        <span className="text-gray-400 text-lg" aria-hidden="true">🔍</span>
         <input
           type="text"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
+          onFocus={() => visibleSuggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
           className="flex-1 bg-transparent outline-none text-sm"
           aria-label="Search products"
           aria-autocomplete="list"
-          aria-expanded={open}
+          aria-controls="search-suggestions"
         />
         {query && (
           <button
@@ -115,9 +124,9 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
         </button>
       </div>
 
-      {/* Dropdown */}
-      {open && (
+      {dropdownOpen && (
         <ul
+          id="search-suggestions"
           role="listbox"
           className="absolute z-50 w-full mt-1 rounded-xl border shadow-lg overflow-hidden"
           style={{ background: '#fff', borderColor: '#e5e7eb' }}
@@ -127,18 +136,19 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
               Searching…
             </li>
           )}
-          {!loading && suggestions.map((product, i) => {
+          {!loading && visibleSuggestions.map((product, i) => {
             const price = cheapestPrice(product);
             return (
               <li
                 key={i}
                 role="option"
+                aria-selected={false}
                 onClick={() => handleSelect(product.name)}
                 className="flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-gray-50 text-sm border-b last:border-b-0"
                 style={{ borderColor: '#f3f4f6' }}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base">🛒</span>
+                  <span className="text-base" aria-hidden="true">🛒</span>
                   <span className="truncate" style={{ color: 'var(--text-primary)' }}>{product.name}</span>
                   {product.category && (
                     <span className="text-xs shrink-0" style={{ color: 'var(--text-secondary)' }}>
@@ -154,13 +164,13 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
               </li>
             );
           })}
-          {!loading && suggestions.length > 0 && (
+          {!loading && visibleSuggestions.length > 0 && (
             <li
               onClick={() => navigate(query)}
               className="px-4 py-2.5 cursor-pointer text-sm font-medium text-center"
               style={{ background: '#f9fafb', color: '#154734' }}
             >
-              See all results for "{query}" →
+              See all results for &apos;{query}&apos; →
             </li>
           )}
         </ul>

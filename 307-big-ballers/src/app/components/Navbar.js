@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import AuthButton from './AuthButton';
 import { SearchIcon, HeartIcon, CloseIcon, MenuIcon } from './icons';
 import cartIcon from '@/assets/opticart-logo.png';
@@ -14,12 +14,8 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [localSearch, setLocalSearch] = useState('');
-
-  useEffect(() => {
-    const q = searchParams.get('q');
-    if (q && pathname === '/home') setLocalSearch(q);
-  }, [searchParams, pathname]);
+  const urlQuery = pathname === '/home' ? (searchParams.get('q') ?? '') : '';
+  const [localSearch, setLocalSearch] = useState(urlQuery);
 
   if (HIDDEN_ON.includes(pathname)) return null;
 
@@ -116,7 +112,14 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
 export default function Navbar(props) {
   return (
     <Suspense fallback={null}>
-      <NavbarInner {...props} />
+      <NavbarKeyed {...props} />
     </Suspense>
   );
+}
+
+function NavbarKeyed(props) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const key = `${pathname}-${searchParams.get('q') ?? ''}`;
+  return <NavbarInner key={key} {...props} />;
 }

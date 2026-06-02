@@ -112,9 +112,11 @@ function HomeInner() {
   const [priceCap, setPriceCap] = useState("");
   const [listFeedback, setListFeedback] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
-  const [activeQuery, setActiveQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeStore, setActiveStore] = useState(null);
+
+  const urlQuery = searchParams.get("category") ?? searchParams.get("q") ?? "";
+  const isCategorySearch = !!searchParams.get("category");
 
   useEffect(() => {
     async function init() {
@@ -125,12 +127,29 @@ function HomeInner() {
       }
     }
     init();
+  }, []);
 
-    const q = searchParams.get("q");
-    const cat = searchParams.get("category");
-    if (cat) { setActiveQuery(cat); search(cat, true); }
-    else if (q) { setActiveQuery(q); search(q, false); }
-  }, [searchParams]);
+  useEffect(() => {
+    if (!urlQuery) return;
+
+    let cancelled = false;
+
+    async function fetchProducts() {
+      setLoading(true);
+      const param = isCategorySearch
+        ? `category=${encodeURIComponent(urlQuery)}`
+        : `q=${encodeURIComponent(urlQuery)}`;
+      const res = await fetch(`/api/products?${param}`);
+      const data = await res.json();
+      if (!cancelled) {
+        setProducts(res.ok ? data : []);
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+    return () => { cancelled = true; };
+  }, [urlQuery, isCategorySearch]);
 
   async function toggleList(productName) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -203,15 +222,7 @@ function HomeInner() {
       });
   })();
 
-  async function search(query, isCategory = false) {
-    if (!query) return;
-    setLoading(true);
-    const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
-    const res = await fetch(`/api/products?${param}`);
-    const data = await res.json();
-    setProducts(res.ok ? data : []);
-    setLoading(false);
-  }
+  const activeQuery = urlQuery;
 
   return (
     <div className="p-6">
@@ -287,7 +298,7 @@ function HomeInner() {
       )}
 
       <div className="flex flex-col gap-3">
-        {!loading && displayProducts.map((p, i) => (
+        {!loading && activeQuery && displayProducts.map((p, i) => (
           <ResultCard
             key={`${p.name}-${i}`}
             product={p}

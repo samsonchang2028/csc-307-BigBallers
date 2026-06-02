@@ -46,20 +46,14 @@ function SpecCard({ icon: Icon, label, value }) {
 
 function ProductDetailInner() {
   const router = useRouter();
-  const [product, setProduct] = useState(null);
+  const [product] = useState(() => loadProductForDetail());
   const [favorited, setFavorited] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [activeStore, setActiveStore] = useState(null);
+  const loading = product === null;
 
   useEffect(() => {
-    const stored = loadProductForDetail();
-    if (stored) {
-      setProduct(stored);
-      setLoading(false);
-      return;
-    }
-    router.replace("/home");
-  }, [router]);
+    if (!product) router.replace("/home");
+  }, [product, router]);
 
   useEffect(() => {
     if (!product) return;
