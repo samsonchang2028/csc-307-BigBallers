@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import CalPolyBadge from '@/app/components/CalPolyBadge';
+import cartIcon from '@/assets/opticart-logo.png';
+import textLogo from '@/assets/opticart-text-logo.png';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login');
@@ -41,10 +42,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center text-center mb-8">
-          <CalPolyBadge size={48} />
-          <h1 className="text-2xl font-bold mt-3" style={{ color: 'var(--poly-green)' }}>OptiCart</h1>
+          <img src={cartIcon.src} alt="OptiCart" style={{ height: 64, width: 'auto' }} />
+          <img src={textLogo.src} alt="OptiCart" style={{ height: 36, width: 'auto', marginTop: 8 }} />
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Compare grocery prices across local stores
+            Your groceries, one destination
           </p>
         </div>
 
