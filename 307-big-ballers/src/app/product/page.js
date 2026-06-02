@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ProductPlaceholder from "@/app/components/ProductPlaceholder";
+import StorePanel from "@/app/components/StorePanel";
 import PriceHistoryChart from "@/app/components/PriceHistoryChart";
 import { getStoreName } from "@/app/components/constants";
 import {
@@ -48,6 +49,7 @@ function ProductDetailInner() {
   const [product, setProduct] = useState(null);
   const [favorited, setFavorited] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeStore, setActiveStore] = useState(null);
 
   useEffect(() => {
     const stored = loadProductForDetail();
@@ -200,7 +202,7 @@ function ProductDetailInner() {
                           borderLeft: isBest ? "3px solid var(--poly-green)" : "3px solid transparent",
                         }}
                       >
-                        {store}
+                        <button onClick={() => setActiveStore(shortStoreName(store))} className="hover:underline font-medium text-left">{store}</button>
                       </td>
                       <td
                         className="px-5 py-3.5 text-right font-bold"
@@ -264,6 +266,7 @@ function ProductDetailInner() {
         <SpecCard icon={TagIcon} label="Category" value={product.category ?? "Grocery"} />
         <SpecCard icon={InfoIcon} label="Size" value={product.unit ?? "—"} />
       </div>
+      {activeStore && <StorePanel storeName={activeStore} onClose={() => setActiveStore(null)} />}
     </div>
   );
 }
