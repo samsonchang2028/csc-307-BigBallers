@@ -65,7 +65,7 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
             className="hidden lg:block text-xs pl-3 border-l"
             style={{ color: 'var(--text-muted-accessible)', borderColor: 'var(--border)' }}
           >
-            Your groceries, one destination
+            Your groceries at its cheapest
           </span>
         </Link>
 
