@@ -45,7 +45,7 @@ export default function LoginPage() {
           <img src={cartIcon.src} alt="OptiCart" style={{ height: 64, width: 'auto' }} />
           <img src={textLogo.src} alt="OptiCart" style={{ height: 36, width: 'auto', marginTop: 8 }} />
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Your groceries, one destination
+            Your groceries at its cheapest
           </p>
         </div>
 

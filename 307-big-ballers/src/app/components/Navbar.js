@@ -14,7 +14,7 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const urlQuery = pathname === '/home' ? (searchParams.get('q') ?? '') : '';
+  const urlQuery = pathname === '/search' ? (searchParams.get('q') ?? '') : '';
   const [localSearch, setLocalSearch] = useState(urlQuery);
 
   if (HIDDEN_ON.includes(pathname)) return null;
@@ -29,7 +29,7 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
 
   function handleSearch() {
     if (onSearch) onSearch(value);
-    else if (value.trim()) router.push(`/home?q=${encodeURIComponent(value.trim())}`);
+    else if (value.trim()) router.push(`/search?q=${encodeURIComponent(value.trim())}`);
   }
 
   function handleKeyDown(e) {
@@ -65,7 +65,7 @@ function NavbarInner({ searchInput, onSearchChange, onSearch, onMenuClick }) {
             className="hidden lg:block text-xs pl-3 border-l"
             style={{ color: 'var(--text-muted-accessible)', borderColor: 'var(--border)' }}
           >
-            Your groceries, one destination
+            Your groceries at its cheapest
           </span>
         </Link>
 

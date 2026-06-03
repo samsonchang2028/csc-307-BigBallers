@@ -7,7 +7,7 @@ import calPolyLogo from "@/assets/calpoly-logo.png";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/home", label: "Search", icon: SearchIcon },
+  { href: "/search", label: "Search", icon: SearchIcon },
   { href: "/grocery-list", label: "Grocery List", icon: HeartIcon },
 ];
 
@@ -16,7 +16,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
 
   function isActive(href) {
     if (href === "/") return pathname === "/";
-    if (href.startsWith("/home")) return pathname === "/home";
+    if (href.startsWith("/search")) return pathname === "/search";
     return pathname === href.split("?")[0];
   }
 

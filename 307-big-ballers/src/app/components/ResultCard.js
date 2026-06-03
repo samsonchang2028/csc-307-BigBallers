@@ -32,9 +32,12 @@ export default function ResultCard({ product, index, onToggleList, isFavorited, 
 
   return (
     <div className="card overflow-hidden">
-      <button
+      <div
         onClick={() => setExpanded(v => !v)}
+        role="button"
+        tabIndex={0}
         aria-expanded={expanded}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setExpanded(v => !v)}
         className="w-full flex flex-col sm:flex-row sm:items-center gap-4 p-4 text-left cursor-pointer hover:bg-gray-50"
       >
         <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -84,7 +87,7 @@ export default function ResultCard({ product, index, onToggleList, isFavorited, 
             {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
           </div>
         </div>
-      </button>
+      </div>
 
       {expanded && (
         <div
