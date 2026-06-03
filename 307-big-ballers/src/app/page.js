@@ -16,6 +16,7 @@ import calFreshLogo      from '@/assets/cal-fresh.png';
 import traderJoesLogo    from '@/assets/trader-joes.png';
 import ralphsLogo        from '@/assets/ralphs.png';
 import food4lessLogo     from '@/assets/food4less.png';
+import cartIcon          from '@/assets/opticart-logo.png';
 
 const krogerStoreIdMap = { Ralphs: 'kroger-ralphs', 'Food 4 Less': 'kroger-food4less' };
 
@@ -81,6 +82,7 @@ export default function RootPage() {
     );
 
     const storeTotals = {};
+    const storeItemCounts = {};
     fetched.forEach(product => {
       if (!product?.prices?.length) return;
       const byStore = {};
@@ -92,6 +94,7 @@ export default function RootPage() {
       });
       Object.entries(byStore).forEach(([id, price]) => {
         storeTotals[id] = (storeTotals[id] ?? 0) + price;
+        storeItemCounts[id] = (storeItemCounts[id] ?? 0) + 1;
       });
     });
 
@@ -101,7 +104,12 @@ export default function RootPage() {
       return;
     }
 
-    const bestId = Object.entries(storeTotals).sort((a, b) => a[1] - b[1])[0][0];
+    // Primary: most items covered. Tiebreak: lowest total cost.
+    const bestId = Object.entries(storeTotals)
+      .sort((a, b) => {
+        const countDiff = (storeItemCounts[b[0]] ?? 0) - (storeItemCounts[a[0]] ?? 0);
+        return countDiff !== 0 ? countDiff : a[1] - b[1];
+      })[0][0];
     const missingCount = fetched.filter(product => {
       if (!product?.prices?.length) return true;
       return !product.prices.some(pr => {
@@ -141,44 +149,44 @@ export default function RootPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto w-full px-6 pt-6 pb-2">
+      <div className="max-w-6xl mx-auto w-full px-6 pt-14 pb-2">
         <button
           onClick={optimize}
           disabled={optimizing}
-          className="w-full py-4 text-lg font-bold text-white tracking-wide transition-opacity disabled:opacity-50 cursor-pointer"
+          className="w-1/2 mx-auto py-8 flex items-center justify-center gap-3 text-lg font-bold text-white tracking-wide transition-opacity disabled:opacity-50 cursor-pointer"
           style={{ background: 'var(--poly-green)', borderRadius: 'var(--radius)' }}
         >
-          {optimizing ? 'Optimizing...' : 'OPTIMIZE'}
+          <img src={cartIcon.src} alt="" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)' }} />
+          {optimizing ? 'Thinking really hard...' : 'OPTIMIZE'}
         </button>
 
         {optimizeResult?.empty && (
-          <div className="card mt-3 px-5 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Add items to your grocery list first.
+          <div className="card mt-4 w-1/2 mx-auto px-6 py-8 text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+            Your grocery list is empty 
           </div>
         )}
         {optimizeResult?.noData && (
-          <div className="card mt-3 px-5 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Could not find price data for your list.
+          <div className="card mt-4 w-1/2 mx-auto px-6 py-8 text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+            Could not find price data for your list
           </div>
         )}
         {optimizeResult?.storeId && (
-          <div className="card mt-3 px-5 py-4 flex items-center gap-4">
+          <div className="card mt-4 w-1/2 mx-auto px-6 py-10 flex flex-col items-center gap-4 text-center">
             {STORE_LOGOS[optimizeResult.storeId] && (
               <img
                 src={STORE_LOGOS[optimizeResult.storeId].src}
                 alt={optimizeResult.storeName}
-                style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+                style={{ height: 64, width: 'auto', objectFit: 'contain' }}
               />
             )}
             <div>
-              <p className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
-                {optimizeResult.storeName}
-              </p>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--savings-green-text)' }}>
-                Best store for your grocery list — ${optimizeResult.total.toFixed(2)} estimated total
+              <p className="text-sm mt-1" style={{ color: 'var(--savings-green-text)' }}>
+                is the cheapest store for your grocery list
+                <br></br>
+                ${optimizeResult.total.toFixed(2)} estimated total
               </p>
               {optimizeResult.missingCount > 0 && (
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted-accessible)' }}>
+                <p className="text-xs mt-2" style={{ color: 'var(--text-muted-accessible)' }}>
                   {optimizeResult.missingCount} of {optimizeResult.totalItems} items not available here
                 </p>
               )}
