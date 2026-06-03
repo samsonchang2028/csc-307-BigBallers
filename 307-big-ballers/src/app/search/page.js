@@ -114,7 +114,6 @@ function HomeInner() {
   const [addedItems, setAddedItems] = useState(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeStore, setActiveStore] = useState(null);
-
   const urlQuery = searchParams.get("category") ?? searchParams.get("q") ?? "";
   const isCategorySearch = !!searchParams.get("category");
 

@@ -52,7 +52,7 @@ function ProductDetailInner() {
   const loading = product === null;
 
   useEffect(() => {
-    if (!product) router.replace("/home");
+    if (!product) router.replace("/search");
   }, [product, router]);
 
   useEffect(() => {

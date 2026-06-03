@@ -5,9 +5,29 @@ import { useRouter } from 'next/navigation';
 import CategoryChip from '@/app/components/CategoryChip';
 import DealCard, { DealCardSkeleton } from '@/app/components/DealCard';
 import StorePanel from '@/app/components/StorePanel';
-import { CATEGORIES } from '@/app/components/constants';
+import { CATEGORIES, STORE_NAMES, getStoreName } from '@/app/components/constants';
 import { saveProductForDetail } from '@/app/components/utils';
 import { TagIcon, ArrowRightIcon } from '@/app/components/icons';
+import { supabase } from '@/lib/supabase';
+import sproutsLogo       from '@/assets/sprouts.png';
+import smartFinalLogo    from '@/assets/smart-final.png';
+import groceryOutletLogo from '@/assets/grocery-outlet.png';
+import calFreshLogo      from '@/assets/cal-fresh.png';
+import traderJoesLogo    from '@/assets/trader-joes.png';
+import ralphsLogo        from '@/assets/ralphs.png';
+import food4lessLogo     from '@/assets/food4less.png';
+
+const krogerStoreIdMap = { Ralphs: 'kroger-ralphs', 'Food 4 Less': 'kroger-food4less' };
+
+const STORE_LOGOS = {
+  'd509a460-ad97-4099-a6df-d03798e03d6d': sproutsLogo,
+  '0c293cf1-2b65-4d9e-9cb2-4688b41460f7': smartFinalLogo,
+  'eefcee75-d1f4-49c3-8a40-c59982d72287': groceryOutletLogo,
+  '9ae30061-19f8-41f5-8bdf-85694ddec2dc': calFreshLogo,
+  '1971e92b-78af-4dcc-9bfa-cf3349b649ef': traderJoesLogo,
+  'kroger-ralphs':    ralphsLogo,
+  'kroger-food4less': food4lessLogo,
+};
 
 export default function RootPage() {
   const router = useRouter();
@@ -15,6 +35,20 @@ export default function RootPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(null);
   const [activeStore, setActiveStore] = useState(null);
+  const [addedItems, setAddedItems] = useState(new Set());
+  const [optimizeResult, setOptimizeResult] = useState(null);
+  const [optimizing, setOptimizing] = useState(false);
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from('grocery_list').select('product_name');
+        if (data) setAddedItems(new Set(data.map(r => r.product_name)));
+      }
+    }
+    init();
+  }, []);
 
   useEffect(() => {
     fetch('/api/deals')
@@ -26,10 +60,70 @@ export default function RootPage() {
       .catch(() => setLoading(false));
   }, []);
 
+  async function optimize() {
+    setOptimizing(true);
+    setOptimizeResult(null);
+
+    const names = [...addedItems];
+    if (names.length === 0) {
+      setOptimizeResult({ empty: true });
+      setOptimizing(false);
+      return;
+    }
+
+    const fetched = await Promise.all(
+      names.map(name =>
+        fetch(`/api/products?q=${encodeURIComponent(name)}`)
+          .then(r => r.json())
+          .then(list => list.find(p => p.name === name) || list[0] || null)
+          .catch(() => null)
+      )
+    );
+
+    const storeTotals = {};
+    fetched.forEach(product => {
+      if (!product?.prices?.length) return;
+      const byStore = {};
+      product.prices.forEach(pr => {
+        const id = pr.source === 'kroger' ? krogerStoreIdMap[pr.store_name] : pr.store_id;
+        if (!id) return;
+        const p = parseFloat(pr.price);
+        if (!byStore[id] || p < byStore[id]) byStore[id] = p;
+      });
+      Object.entries(byStore).forEach(([id, price]) => {
+        storeTotals[id] = (storeTotals[id] ?? 0) + price;
+      });
+    });
+
+    if (Object.keys(storeTotals).length === 0) {
+      setOptimizeResult({ noData: true });
+      setOptimizing(false);
+      return;
+    }
+
+    const bestId = Object.entries(storeTotals).sort((a, b) => a[1] - b[1])[0][0];
+    const missingCount = fetched.filter(product => {
+      if (!product?.prices?.length) return true;
+      return !product.prices.some(pr => {
+        const id = pr.source === 'kroger' ? krogerStoreIdMap[pr.store_name] : pr.store_id;
+        return id === bestId;
+      });
+    }).length;
+
+    setOptimizeResult({
+      storeId: bestId,
+      storeName: getStoreName(bestId),
+      total: storeTotals[bestId],
+      missingCount,
+      totalItems: names.length,
+    });
+    setOptimizing(false);
+  }
+
   function goToSearch(query, isCategory, label) {
     if (isCategory) setActiveCategory(label);
     const param = isCategory ? `category=${encodeURIComponent(query)}` : `q=${encodeURIComponent(query)}`;
-    router.push(`/home?${param}`);
+    router.push(`/search?${param}`);
   }
 
   return (
@@ -47,6 +141,52 @@ export default function RootPage() {
         </div>
       </div>
 
+      <div className="max-w-6xl mx-auto w-full px-6 pt-6 pb-2">
+        <button
+          onClick={optimize}
+          disabled={optimizing}
+          className="w-full py-4 text-lg font-bold text-white tracking-wide transition-opacity disabled:opacity-50 cursor-pointer"
+          style={{ background: 'var(--poly-green)', borderRadius: 'var(--radius)' }}
+        >
+          {optimizing ? 'Optimizing...' : 'OPTIMIZE'}
+        </button>
+
+        {optimizeResult?.empty && (
+          <div className="card mt-3 px-5 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Add items to your grocery list first.
+          </div>
+        )}
+        {optimizeResult?.noData && (
+          <div className="card mt-3 px-5 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Could not find price data for your list.
+          </div>
+        )}
+        {optimizeResult?.storeId && (
+          <div className="card mt-3 px-5 py-4 flex items-center gap-4">
+            {STORE_LOGOS[optimizeResult.storeId] && (
+              <img
+                src={STORE_LOGOS[optimizeResult.storeId].src}
+                alt={optimizeResult.storeName}
+                style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+              />
+            )}
+            <div>
+              <p className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                {optimizeResult.storeName}
+              </p>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--savings-green-text)' }}>
+                Best store for your grocery list — ${optimizeResult.total.toFixed(2)} estimated total
+              </p>
+              {optimizeResult.missingCount > 0 && (
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted-accessible)' }}>
+                  {optimizeResult.missingCount} of {optimizeResult.totalItems} items not available here
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="max-w-6xl mx-auto w-full px-6 py-6">
         <div className="flex items-start justify-between mb-5">
           <div>
@@ -61,7 +201,7 @@ export default function RootPage() {
             </p>
           </div>
           <button
-            onClick={() => router.push('/home')}
+            onClick={() => router.push('/search')}
             className="flex items-center gap-1 text-sm font-medium cursor-pointer"
             style={{ color: 'var(--poly-green)' }}
           >
