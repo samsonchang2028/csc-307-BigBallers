@@ -104,26 +104,45 @@ export default function RootPage() {
       return;
     }
 
+    // Build per-store missing item lists
+    const storeMissingItems = {};
+    names.forEach((name, i) => {
+      const product = fetched[i];
+      const productStoreIds = new Set(
+        (product?.prices ?? [])
+          .map(pr => pr.source === 'kroger' ? krogerStoreIdMap[pr.store_name] : pr.store_id)
+          .filter(Boolean)
+      );
+      Object.keys(storeTotals).forEach(storeId => {
+        if (!productStoreIds.has(storeId)) {
+          if (!storeMissingItems[storeId]) storeMissingItems[storeId] = [];
+          storeMissingItems[storeId].push(name);
+        }
+      });
+    });
+
     // Primary: most items covered. Tiebreak: lowest total cost.
-    const bestId = Object.entries(storeTotals)
+    const sortedStores = Object.entries(storeTotals)
       .sort((a, b) => {
         const countDiff = (storeItemCounts[b[0]] ?? 0) - (storeItemCounts[a[0]] ?? 0);
         return countDiff !== 0 ? countDiff : a[1] - b[1];
-      })[0][0];
-    const missingCount = fetched.filter(product => {
-      if (!product?.prices?.length) return true;
-      return !product.prices.some(pr => {
-        const id = pr.source === 'kroger' ? krogerStoreIdMap[pr.store_name] : pr.store_id;
-        return id === bestId;
       });
-    }).length;
+    const bestId = sortedStores[0][0];
+
+    const allStores = sortedStores.map(([storeId, total]) => ({
+      storeId,
+      total,
+      itemCount: storeItemCounts[storeId] ?? 0,
+      missingItems: storeMissingItems[storeId] ?? [],
+    }));
 
     setOptimizeResult({
       storeId: bestId,
       storeName: getStoreName(bestId),
       total: storeTotals[bestId],
-      missingCount,
+      missingCount: (storeMissingItems[bestId] ?? []).length,
       totalItems: names.length,
+      allStores,
     });
     setOptimizing(false);
   }
@@ -171,26 +190,64 @@ export default function RootPage() {
           </div>
         )}
         {optimizeResult?.storeId && (
-          <div className="card mt-4 w-1/2 mx-auto px-6 py-10 flex flex-col items-center gap-4 text-center">
-            {STORE_LOGOS[optimizeResult.storeId] && (
-              <img
-                src={STORE_LOGOS[optimizeResult.storeId].src}
-                alt={optimizeResult.storeName}
-                style={{ height: 64, width: 'auto', objectFit: 'contain' }}
-              />
-            )}
-            <div>
-              <p className="text-sm mt-1" style={{ color: 'var(--savings-green-text)' }}>
-                is the cheapest store for your grocery list
-                <br></br>
-                ${optimizeResult.total.toFixed(2)} estimated total
-              </p>
-              {optimizeResult.missingCount > 0 && (
-                <p className="text-xs mt-2" style={{ color: 'var(--text-muted-accessible)' }}>
-                  {optimizeResult.missingCount} of {optimizeResult.totalItems} items not available here
-                </p>
+          <div className="w-3/4 mx-auto">
+            <div className="card mt-4 px-6 py-10 flex flex-col items-center gap-4 text-center">
+              {STORE_LOGOS[optimizeResult.storeId] && (
+                <img
+                  src={STORE_LOGOS[optimizeResult.storeId].src}
+                  alt={optimizeResult.storeName}
+                  style={{ height: 96, width: 'auto', objectFit: 'contain' }}
+                />
               )}
+              <div>
+                <p className="text-sm mt-1" style={{ color: 'var(--savings-green-text)' }}>
+                  is the cheapest store for your grocery list
+                  <br />
+                  ${optimizeResult.total.toFixed(2)} estimated total
+                </p>
+                {optimizeResult.missingCount > 0 && (
+                  <p className="text-xs mt-2" style={{ color: 'var(--text-muted-accessible)' }}>
+                    {optimizeResult.missingCount} of {optimizeResult.totalItems} items not available here
+                  </p>
+                )}
+              </div>
             </div>
+
+            <div className="card mt-3 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: 'var(--border-light)', background: '#fafafa' }}>
+                    <th className="px-4 py-2 text-left text-xs font-semibold" style={{ color: 'var(--text-muted-accessible)' }}>Store</th>
+                    <th className="px-4 py-2 text-right text-xs font-semibold" style={{ color: 'var(--text-muted-accessible)' }}>Est. Total</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold" style={{ color: 'var(--text-muted-accessible)' }}>Missing items</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {optimizeResult.allStores.map(({ storeId, total, missingItems }, i) => (
+                    <tr
+                      key={storeId}
+                      className="border-b last:border-0"
+                      style={{ borderColor: 'var(--border-light)', background: i === 0 ? 'var(--savings-green)' : 'transparent' }}
+                    >
+                      <td className="px-4 py-3">
+                        {STORE_LOGOS[storeId]
+                          ? <img src={STORE_LOGOS[storeId].src} alt={getStoreName(storeId)} style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+                          : <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{getStoreName(storeId)}</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        ${total.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          {missingItems.length === 0
+                            ? <span style={{ color: 'var(--poly-green)' }}>All items available</span>
+                            : missingItems.join(', ')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
           </div>
         )}
       </div>
