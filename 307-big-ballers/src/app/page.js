@@ -36,7 +36,7 @@ export default function RootPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(null);
   const [activeStore, setActiveStore] = useState(null);
-  const [addedItems, setAddedItems] = useState(new Set());
+  const [addedItems, setAddedItems] = useState(new Map());
   const [optimizeResult, setOptimizeResult] = useState(null);
   const [optimizing, setOptimizing] = useState(false);
 
@@ -44,8 +44,8 @@ export default function RootPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase.from('grocery_list').select('product_name');
-        if (data) setAddedItems(new Set(data.map(r => r.product_name)));
+        const { data } = await supabase.from('grocery_list').select('product_name, quantity');
+        if (data) setAddedItems(new Map(data.map(r => [r.product_name, r.quantity ?? 1])));
       }
     }
     init();
@@ -65,7 +65,7 @@ export default function RootPage() {
     setOptimizing(true);
     setOptimizeResult(null);
 
-    const names = [...addedItems];
+    const names = [...addedItems.keys()];
     if (names.length === 0) {
       setOptimizeResult({ empty: true });
       setOptimizing(false);
@@ -83,8 +83,10 @@ export default function RootPage() {
 
     const storeTotals = {};
     const storeItemCounts = {};
-    fetched.forEach(product => {
+    names.forEach((name, i) => {
+      const product = fetched[i];
       if (!product?.prices?.length) return;
+      const qty = addedItems.get(name) ?? 1;
       const byStore = {};
       product.prices.forEach(pr => {
         const id = pr.source === 'kroger' ? krogerStoreIdMap[pr.store_name] : pr.store_id;
@@ -93,7 +95,7 @@ export default function RootPage() {
         if (!byStore[id] || p < byStore[id]) byStore[id] = p;
       });
       Object.entries(byStore).forEach(([id, price]) => {
-        storeTotals[id] = (storeTotals[id] ?? 0) + price;
+        storeTotals[id] = (storeTotals[id] ?? 0) + price * qty;
         storeItemCounts[id] = (storeItemCounts[id] ?? 0) + 1;
       });
     });
