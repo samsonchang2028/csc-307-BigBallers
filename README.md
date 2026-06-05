@@ -1,65 +1,84 @@
 # OptiCart
 
-A grocery price comparison web app built with Next.js and Supabase. OptiCart lets users browse products by category, compare prices across local stores, and manage their grocery list — all in one place.
+A grocery price-comparison web app for Cal Poly students, built with Next.js and Supabase. OptiCart lets users search products, compare prices across local San Luis Obispo stores, save a grocery list, and run a one-click **Optimize** to find the single cheapest store for their whole list.
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 16 (App Router) with the React Compiler enabled
 - **UI**: React 19, Tailwind CSS 4, Cal Poly brand colors
 - **Backend / Auth / DB**: Supabase (PostgreSQL + Auth)
+- **Live prices**: Kroger Products API (Ralphs + Food 4 Less, SLO)
 - **Language**: JavaScript (JSX)
 
 ## Project Structure
 
 ```
-src/
-├── app/
-│   ├── layout.js                  # Root layout — metadata, global CSS, Navbar
-│   ├── globals.css                # Cal Poly brand tokens (Poly Green, Mustang Gold)
-│   ├── page.js                    # Home page (/) — Best Deals grid + category chips
-│   ├── home/
-│   │   └── page.js                # Search results page (/home) — filters + product list
-│   ├── login/
-│   │   └── page.js                # Login/signup page (/login)
-│   ├── dashboard/
-│   │   └── page.js                # Authenticated user dashboard (/dashboard)
-│   ├── grocery-list/
-│   │   └── page.js                # Saved grocery list (/grocery-list)
-│   ├── auth/callback/
-│   │   └── page.js                # Supabase auth callback (/auth/callback)
-│   ├── components/
-│   │   ├── Navbar.js              # Top navbar — logo, search bar, auth button
-│   │   ├── AuthButton.js          # Login/logout/signup button
-│   │   └── ItemCard.js            # Product detail modal — price table, cheapest callout
-│   └── api/
-│       ├── products/
-│       │   └── route.js           # GET /api/products — search + Kroger live prices
-│       └── deals/
-│           └── route.js           # GET /api/deals — top 6 products by savings
-└── lib/
-    ├── supabase.js                # Supabase client singleton
-    └── kroger.js                  # Kroger API helper (server-side only)
+307-big-ballers/
+├── next.config.mjs                # React Compiler + remote image domains
+├── eslint.config.mjs
+├── postcss.config.mjs
+├── jsconfig.json                  # "@/*" path alias -> src/*
+└── src/
+    ├── app/
+    │   ├── layout.js              # Root layout — fonts, metadata, AppShell
+    │   ├── globals.css            # Cal Poly brand tokens + helpers
+    │   ├── page.js                # Home (/) — Optimize + Best Deals + categories
+    │   ├── search/page.js         # Search results (/search) — sort/filter + list
+    │   ├── product/page.js        # Product detail (/product) — price table + chart
+    │   ├── login/page.js          # Login / signup (/login)
+    │   ├── grocery-list/page.js   # Saved grocery list (/grocery-list)
+    │   ├── auth/callback/page.js  # Supabase auth callback (/auth/callback)
+    │   ├── api/
+    │   │   ├── products/route.js  # GET /api/products — search + Kroger merge
+    │   │   └── deals/route.js     # GET /api/deals — top deals by savings
+    │   └── components/
+    │       ├── AppShell.js        # Navbar + Sidebar + Footer wrapper
+    │       ├── Navbar.js          # Top bar — logo, search, auth
+    │       ├── Sidebar.js         # Left nav + mobile drawer
+    │       ├── Footer.js
+    │       ├── AuthButton.js      # Login / sign-out button
+    │       ├── DealCard.js        # Best-deals card (+ skeleton)
+    │       ├── ResultCard.js      # Expandable search result row
+    │       ├── StorePanel.js      # Slide-in store info panel
+    │       ├── ProductPlaceholder.js
+    │       ├── PriceHistoryChart.js  # Current price-by-store bars
+    │       ├── CategoryChip.js
+    │       ├── CalPolyBadge.js
+    │       ├── SearchBar.js
+    │       ├── icons.js           # Inline SVG icon set
+    │       ├── constants.js       # CATEGORIES, STORE_NAMES, getStoreName
+    │       ├── utils.js           # Formatting + sessionStorage helpers
+    │       ├── constants.test.mjs # node:test unit tests
+    │       └── utils.test.mjs     # node:test unit tests
+    └── lib/
+        ├── supabase.js            # Supabase client (getSupabase + supabase)
+        └── kroger.js              # Kroger API helper (server-side only)
 ```
 
 ## Pages
 
-| Route           | Description                                                          |
-|-----------------|----------------------------------------------------------------------|
-| `/`             | Home — Best Deals Today grid, category chips, footer taglines        |
-| `/home`         | Search results — filters sidebar, per-store price columns, item list |
-| `/login`        | Email/password login and signup via Supabase Auth                    |
-| `/dashboard`    | Authenticated user info + logout                                     |
-| `/grocery-list` | Saved grocery list for logged-in users                               |
+| Route            | Description                                                                        |
+|------------------|------------------------------------------------------------------------------------|
+| `/`              | Home — category chips, **Optimize** (cheapest store for your list), Best Deals grid |
+| `/search`        | Search results — sort & filter popover, per-store price columns, expandable rows   |
+| `/product`       | Full product detail — price comparison table, "best time to buy", price-by-store chart |
+| `/login`         | Email/password login and signup via Supabase Auth                                  |
+| `/grocery-list`  | Saved list with quantities, per-item price breakdown, and a store filter           |
+| `/auth/callback` | Supabase auth redirect handler                                                     |
+
+> Note: product detail is a dedicated `/product` page. The selected product is handed off via `sessionStorage` (`saveProductForDetail` / `loadProductForDetail` in `utils.js`), so opening `/product` directly redirects back to `/search`.
 
 ## API Routes
 
 ### `GET /api/products`
 
-Returns matched products from Supabase + live Kroger API results, merged into a unified shape.
+Returns matched products from Supabase merged with live Kroger results in a unified shape. Supabase and Kroger are fetched in parallel.
 
-**Query params**:
-- `q` — free-text search across product name and category
+**Query params** (one required):
+- `q` — free-text search across product `name` and `category`
 - `category` — exact category filter (e.g. `Dairy`, `Meat & Seafood`)
+
+Supabase prices are deduplicated to the latest `scraped_at` per `store_id`. Kroger items are normalized to the same shape with `source: "kroger"` and `store_name` set (no `store_id`).
 
 **Response**:
 ```json
@@ -67,13 +86,22 @@ Returns matched products from Supabase + live Kroger API results, merged into a 
   {
     "name": "Clover Sonoma Whole Milk",
     "category": "Dairy",
+    "unit": "1 gal",
+    "image_url": null,
     "prices": [
       {
         "price": 4.99,
         "original_price": 5.99,
         "scraped_at": "2025-05-09T21:00:00Z",
-        "store_id": "d509a460-...",
-        "store_name": null
+        "store_id": "d509a460-ad97-4099-a6df-d03798e03d6d"
+      },
+      {
+        "price": 4.49,
+        "original_price": null,
+        "scraped_at": null,
+        "store_id": null,
+        "store_name": "Ralphs",
+        "source": "kroger"
       }
     ]
   }
@@ -82,57 +110,68 @@ Returns matched products from Supabase + live Kroger API results, merged into a 
 
 ### `GET /api/deals`
 
-Returns the top 6 products with the biggest price savings (`original_price - price`), sorted by savings descending.
+Returns the top 9 products with the biggest savings (`original_price - price`), one row per product (highest-savings store wins), sorted by savings descending. Cached with `s-maxage=60, stale-while-revalidate=120` (`revalidate = 60`).
 
 **Response**:
 ```json
 [
   {
+    "product_id": 12,
     "name": "Chobani Greek Yogurt",
+    "unit": "32 oz",
+    "image_url": null,
     "price": "2.50",
     "original_price": "3.99",
     "savings": "1.49",
-    "store_name": "Sprouts",
-    "store_id": "d509a460-..."
+    "store_name": "Sprouts Farmers Market",
+    "store_id": "d509a460-ad97-4099-a6df-d03798e03d6d"
   }
 ]
 ```
 
 ## Features
 
-### Home Page — Best Deals Today
-The root `/` page shows a 3-column grid of the top 6 deals fetched from `/api/deals`. Each card shows a product image placeholder, name, price in Poly Green, store name, and a savings badge. Clicking a card opens the ItemCard modal. Category chips at the top navigate to `/home?category=...`.
+### Optimize (cheapest store for your list)
+On the home page, **Optimize** fetches a price match for every item in your grocery list (respecting saved quantities), sums each store's total, and ranks stores by **most items covered**, breaking ties by **lowest total cost**. The result shows the winning store plus a full table of every store's estimated total and which items it is missing.
 
-### Search Results Page
-`/home` shows a two-column layout: a filters sidebar on the left and product results on the right. Supports URL params (`?q=` or `?category=`) so category chips on the home page deep-link directly into filtered results.
+### Best Deals Today
+The home page shows a grid of the top deals from `/api/deals`. Each `DealCard` shows the product, price in Poly Green, store name (clickable → `StorePanel`), and a savings badge. Clicking a card opens the `/product` detail page.
 
-### Kroger API Integration
-Live price data from Ralphs and Food 4 Less (SLO locations) is fetched in parallel with Supabase on every search. Results are normalized into the same shape as scraped products. Requires `KROGER_CLIENT_ID` and `KROGER_CLIENT_SECRET` env vars.
+### Search + Sort & Filter
+`/search` reads `?q=` or `?category=` from the URL (category chips deep-link here). A popover supports:
+- **Sort**: Relevance, Price Low→High / High→Low, **Unit Price** Low→High / High→Low
+- **Stores**: toggle any of the 7 stores on/off
+- **Max price** cap
 
-### Product Categories
-8 categories: **Dairy, Fruit, Vegetables, Meat & Seafood, Bakery, Grains & Pasta, Snacks, Beverages**. Category chips use an exact `eq` filter for accuracy and performance.
+Unit-price sorting parses a quantity from the product name (`ct`, `oz`, `lb`, `g`, `ml`, `pack`, etc.) and assumes 1 lb for Meat, Fruit, and Vegetables when no unit is present.
 
-### ItemCard — Product Detail Modal
-Clicking any product opens a modal with:
-- Price comparison table (Store / Current Price / Regular Price / Last Updated)
-- Cheapest Today callout box with savings vs next-lowest store
-- Price Snapshot (highest / lowest / average across stores)
-- "Best time to buy" badge when item is on sale
+### Product Detail (`/product`)
+- Price comparison table (Store / Current / Regular / Last Updated), cheapest row highlighted
+- "Best time to buy" callout when the cheapest price is below the cross-store average
+- `PriceHistoryChart` — horizontal bars of the current price at each store (no fabricated history)
+- Spec cards for Brand, Category, and Size
 
 ### Grocery List
-Authenticated users can add products to their Supabase `grocery_list` table from search results. Already-added items show a green checkmark. Redirects to `/login` if not authenticated.
+Authenticated users add items from search/detail to the Supabase `grocery_list` table (with `quantity`). The list page supports inline quantity steppers, expandable per-item price breakdowns, a "Why this price?" explanation, and a store filter that greys out items unavailable at the checked stores. Changes are batched and saved with **Save Changes**.
 
-### Filters
-- Toggle individual stores on/off (checkboxes)
-- Sort by Relevance / Price: Low to High / Price: High to Low (radio)
-- Set a max price cap
+### Store Info Panel
+Clicking any store name opens `StorePanel`, a slide-in drawer with address, phone, hours, tags, and website. Store details are defined in `StorePanel.js`.
+
+### Kroger Live Prices
+`lib/kroger.js` fetches live prices from Ralphs and Food 4 Less (SLO) in parallel, using client-credentials OAuth with a cached token. Results are normalized into the standard product shape. Requires `KROGER_CLIENT_ID` / `KROGER_CLIENT_SECRET`; `KROGER_ENV=prod` switches from the certification host to production.
+
+### Categories & Stores
+Category chips (`constants.js`): **Dairy, Produce (Fruit), Meat (Meat & Seafood), Bakery, Pantry (Grains & Pasta), Snacks** — the chip label can differ from the DB category it queries.
+
+Stores (`STORE_NAMES`): **Sprouts Farmers Market, Smart & Final, Grocery Outlet, Cal Fresh, Trader Joe's, Ralphs, Food 4 Less**. The first five are Supabase UUIDs; Ralphs/Food 4 Less use synthetic IDs (`kroger-ralphs`, `kroger-food4less`).
 
 ## Branding
 
-Uses Cal Poly official brand colors:
+Cal Poly official brand colors (CSS tokens in `globals.css`):
 - **Poly Green** `#154734` — primary actions, prices, active states
 - **Mustang Gold** `#BD8B13` — accent
-- **Stadium Gold** `#F8E08E` — savings badges
+- **Stadium Gold** `#F8E08E`
+- **Savings Green** `#e8f5ec` / text `#1a6b42` — savings highlights
 
 ## Getting Started
 
@@ -140,29 +179,30 @@ Uses Cal Poly official brand colors:
 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project with:
-  - `products` table (columns: `id`, `name`, `category`, `image_url`)
-  - `prices` table (columns: `price`, `original_price`, `scraped_at`, `store_id`, `product_id`)
-  - `stores` table (columns: `id`, `name`)
-  - `grocery_list` table (columns: `id`, `user_id`, `product_name`)
+  - `products` (`id`, `name`, `category`, `unit`, `image_url`)
+  - `prices` (`price`, `original_price`, `scraped_at`, `store_id`, `product_id`)
+  - `stores` (`id`, `name`)
+  - `grocery_list` (`id`, `user_id`, `product_name`, `quantity`, `created_at`)
   - Email/password auth enabled
-- (Optional) Kroger Developer account for live Kroger prices
+- (Optional) Kroger Developer account for live Ralphs / Food 4 Less prices
 
 ### Setup
 
-1. Clone the repo and install dependencies:
+1. Install dependencies:
 
 ```bash
 cd 307-big-ballers
 npm install
 ```
 
-2. Create a `.env.local` file inside `307-big-ballers/`:
+2. Create `.env.local` inside `307-big-ballers/`:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 KROGER_CLIENT_ID=your_kroger_client_id
 KROGER_CLIENT_SECRET=your_kroger_client_secret
+# optional: KROGER_ENV=prod
 ```
 
 3. Start the dev server:
@@ -173,27 +213,36 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Other Scripts
+### Scripts
 
-| Command          | Description                  |
-|------------------|------------------------------|
-| `npm run dev`    | Start development server     |
-| `npm run build`  | Build for production         |
-| `npm run start`  | Start production server      |
-| `npm run lint`   | Run ESLint                   |
-| `npm run format` | Format code with Prettier    |
+| Command          | Description                              |
+|------------------|------------------------------------------|
+| `npm run dev`    | Start development server                 |
+| `npm run build`  | Build for production                     |
+| `npm run start`  | Start production server                  |
+| `npm run lint`   | Run ESLint                               |
+| `npm run format` | Format with Prettier                     |
+
+Unit tests use Node's built-in test runner:
+
+```bash
+node --test src/app/components/utils.test.mjs src/app/components/constants.test.mjs
+```
 
 ## Environment Variables
 
-| Variable                        | Description                            |
-|---------------------------------|----------------------------------------|
-| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon/public key          |
-| `KROGER_CLIENT_ID`              | Kroger API client ID (server-only)     |
-| `KROGER_CLIENT_SECRET`          | Kroger API client secret (server-only) |
+| Variable                        | Description                                            |
+|---------------------------------|--------------------------------------------------------|
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key                               |
+| `KROGER_CLIENT_ID`              | Kroger API client ID (server-only)                     |
+| `KROGER_CLIENT_SECRET`          | Kroger API client secret (server-only)                 |
+| `KROGER_ENV`                    | Optional. `prod` uses the production Kroger host        |
 
-> **Never commit `.env.local`** — it is already listed in `.gitignore`.
+> **Never commit `.env.local`** — it is already in `.gitignore`.
 
 ## Data Design Note
 
-Each product in the DB is a store-specific SKU. Products are **not** matched across stores into canonical items — the ItemCard shows all prices for that SKU across whichever stores carry it.
+Each row in `products` is a store-specific SKU. Products are **not** matched into canonical cross-store items; price comparison shows whatever stores carry that SKU, and Kroger results are appended as additional entries from the live API.
+
+For full technical details, see [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).

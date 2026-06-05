@@ -56,7 +56,7 @@ export default function SearchBar({ placeholder = 'Search for eggs, milk, chicke
 
   function navigate(q) {
     setOpen(false);
-    router.push(`/home?q=${encodeURIComponent(q.trim())}`);
+    router.push(`/search?q=${encodeURIComponent(q.trim())}`);
   }
 
   function handleKeyDown(e) {
