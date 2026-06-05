@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1780517324775" clover="3.2.0">
+  <project timestamp="1780517324776" name="All files">
+    <metrics statements="34" coveredstatements="34" conditionals="21" coveredconditionals="21" methods="12" coveredmethods="12" elements="67" coveredelements="67" complexity="0" loc="34" ncloc="34" packages="1" files="1" classes="1"/>
+    <file name="page.js" path="C:\Users\iwpre\Projects\school\csc-307-BigBallers\307-big-ballers\src\app\login\page.js">
+      <metrics statements="34" coveredstatements="34" conditionals="21" coveredconditionals="21" methods="12" coveredmethods="12"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
+      <line num="5" count="1" type="stmt"/>
+      <line num="7" count="13" type="stmt"/>
+      <line num="8" count="37" type="stmt"/>
+      <line num="9" count="37" type="stmt"/>
+      <line num="10" count="37" type="stmt"/>
+      <line num="11" count="37" type="stmt"/>
+      <line num="12" count="37" type="stmt"/>
+      <line num="13" count="37" type="stmt"/>
+      <line num="14" count="37" type="stmt"/>
+      <line num="16" count="8" type="stmt"/>
+      <line num="19" count="3" type="stmt"/>
+      <line num="20" count="3" type="stmt"/>
+      <line num="21" count="3" type="stmt"/>
+      <line num="22" count="2" type="stmt"/>
+      <line num="23" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="24" count="1" type="stmt"/>
+      <line num="28" count="5" type="stmt"/>
+      <line num="29" count="5" type="stmt"/>
+      <line num="30" count="5" type="stmt"/>
+      <line num="31" count="4" type="stmt"/>
+      <line num="32" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="33" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="34" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="35" count="1" type="stmt"/>
+      <line num="63" count="1" type="stmt"/>
+      <line num="67" count="1" type="stmt"/>
+      <line num="68" count="1" type="stmt"/>
+      <line num="75" count="1" type="stmt"/>
+      <line num="79" count="1" type="stmt"/>
+      <line num="80" count="1" type="stmt"/>
+      <line num="97" count="7" type="stmt"/>
+      <line num="103" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>
